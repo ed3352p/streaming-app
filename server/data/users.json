@@ -3,12 +3,12 @@
     "id": 1766474373942,
     "email": "edrrf213@gmail.com",
     "username": "admin2",
-    "passwordHash": "$2a$12$Izn.gjoC7iWJ3VKbFTxaD.yYN.Us1.s/Jgj3ectEs3rDMc14.kX.K",
+    "passwordHash": "$2a$12$4pRDK5352eEE2GJe0f9qmOnJX8mrgyPr9/JPw39Hq6xpML0V/L7ii",
     "role": "admin",
     "premium": true,
     "name": "admin",
     "mustChangePassword": false,
     "createdAt": "2025-12-23T07:19:33.942Z",
-    "passwordChangedAt": "2025-12-23T07:20:31.864Z"
+    "passwordChangedAt": "2025-12-23T19:58:00.000Z"
   }
 ]

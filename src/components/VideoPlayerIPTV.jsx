@@ -79,18 +79,13 @@ export default function VideoPlayerIPTV({ src, title }) {
           
           hlsRef.current = hls;
           
-          // Mode Auto par défaut pour tous
+          // Mode Auto par défaut pour tous - qualité maximale
           hls.currentLevel = -1;
           setQuality('Auto');
           setCurrentQualityLevel(-1);
           
-          // Pour les non-premium, limiter le niveau max à 360p
-          if (!isPremium && hls.levels.length > 0) {
-            const maxLevelIndex = hls.levels.findIndex(level => level.height <= 360);
-            if (maxLevelIndex !== -1) {
-              hls.autoLevelCapping = maxLevelIndex; // Limite le mode auto à 360p max
-            }
-          }
+          // Qualité maximale pour tous les utilisateurs (premium ou non)
+          // Pas de limitation de qualité
           
           setIsLoading(false);
           video.play()

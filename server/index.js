@@ -6,6 +6,10 @@ import crypto from 'crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
+import hpp from 'hpp';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -122,9 +126,58 @@ if (!existsSync(DATA_DIR)) {
   mkdirSync(DATA_DIR, { recursive: true });
 }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Security Middleware
+// Helmet - Secure HTTP headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'", "http://localhost:*", "https://min-stream.click"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// CORS with strict origin control
+app.use(cors({
+  origin: ['https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400
+}));
+
+// Body parser with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Data sanitization against NoSQL injection
+app.use(mongoSanitize());
+
+// Prevent HTTP Parameter Pollution
+app.use(hpp());
+
+// Global rate limiter
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Limit each IP to 1000 requests per windowMs
+  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use(globalLimiter);
+
+// Strict rate limiter for auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 requests per windowMs
+  message: 'Trop de tentatives de connexion, veuillez réessayer plus tard.',
+  skipSuccessfulRequests: true
+});
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -143,6 +196,35 @@ function readData(file) {
 
 function writeData(file, data) {
   writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+// Input validation and sanitization
+function sanitizeString(str) {
+  if (typeof str !== 'string') return '';
+  return str.trim()
+    .replace(/[<>]/g, '') // Remove < and >
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+=/gi, '') // Remove event handlers
+    .substring(0, 1000); // Limit length
+}
+
+function validateEmail(email) {
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email) && email.length <= 255;
+}
+
+function validateUsername(username) {
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  return usernameRegex.test(username);
+}
+
+function validateUrl(url) {
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
 }
 
 // Initialize default admin user with secure random password
@@ -221,38 +303,31 @@ function requireAdmin(req, res, next) {
 
 // ============ AUTH ROUTES ============
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
-    const clientIp = req.ip || req.connection.remoteAddress || 'unknown';
+    let { identifier, password } = req.body;
     
-    // Check rate limit
-    const rateLimit = checkRateLimit(clientIp);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({ 
-        error: `Trop de tentatives. Réessayez dans ${rateLimit.waitTime} secondes.`,
-        retryAfter: rateLimit.waitTime
-      });
+    // Sanitize identifier input
+    identifier = sanitizeString(identifier).toLowerCase();
+    
+    // Validate inputs
+    if (!identifier || !password) {
+      return res.status(400).json({ error: 'Identifiant et mot de passe requis' });
     }
     
-    const { identifier, password } = req.body;
     const users = readData(USERS_FILE);
     
-    const user = users.find(u => u.email === identifier || u.username === identifier);
+    const user = users.find(u => u.email === identifier || u.username.toLowerCase() === identifier);
     
     if (!user) {
-      recordFailedAttempt(clientIp);
       return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
     }
     
     const isValid = await bcrypt.compare(password, user.passwordHash);
     
     if (!isValid) {
-      recordFailedAttempt(clientIp);
       return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
     }
-    
-    // Clear rate limit on successful login
-    clearRateLimit(clientIp);
     
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -278,26 +353,29 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, async (req, res) => {
   try {
-    const { email, username, password, name } = req.body;
+    let { email, username, password, name } = req.body;
+    
+    // Sanitize inputs
+    email = sanitizeString(email).toLowerCase();
+    username = sanitizeString(username);
+    name = sanitizeString(name);
+    
+    // Validate email format
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: 'Format d\'email invalide' });
+    }
+    
+    // Validate username
+    if (!validateUsername(username)) {
+      return res.status(400).json({ error: 'Le nom d\'utilisateur doit contenir 3-20 caractères alphanumériques' });
+    }
     
     // Validate password strength
     const passwordErrors = validatePassword(password);
     if (passwordErrors.length > 0) {
       return res.status(400).json({ error: passwordErrors.join('. ') });
-    }
-    
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ error: 'Format d\'email invalide' });
-    }
-    
-    // Validate username (alphanumeric, 3-20 chars)
-    const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-    if (!usernameRegex.test(username)) {
-      return res.status(400).json({ error: 'Le nom d\'utilisateur doit contenir 3-20 caractères alphanumériques' });
     }
     
     const users = readData(USERS_FILE);
@@ -514,9 +592,31 @@ app.get('/api/movies/:id', (req, res) => {
 app.post('/api/movies', authenticateToken, requireAdmin, (req, res) => {
   const movies = readData(MOVIES_FILE);
   
+  // Sanitize and validate movie data
+  const { title, description, genre, year, imageUrl, videoUrl, rating } = req.body;
+  
+  if (!title || !description || !genre) {
+    return res.status(400).json({ error: 'Titre, description et genre requis' });
+  }
+  
+  // Validate URLs if provided
+  if (imageUrl && !validateUrl(imageUrl)) {
+    return res.status(400).json({ error: 'URL d\'image invalide' });
+  }
+  
+  if (videoUrl && !validateUrl(videoUrl)) {
+    return res.status(400).json({ error: 'URL de vidéo invalide' });
+  }
+  
   const newMovie = {
     id: Date.now(),
-    ...req.body,
+    title: sanitizeString(title),
+    description: sanitizeString(description),
+    genre: sanitizeString(genre),
+    year: parseInt(year) || new Date().getFullYear(),
+    imageUrl: imageUrl || '',
+    videoUrl: videoUrl || '',
+    rating: parseFloat(rating) || 0,
     createdAt: new Date().toISOString()
   };
   

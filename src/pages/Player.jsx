@@ -41,21 +41,20 @@ export default function Player() {
     const countNormal = adsSettings.countNormal || 5;
     const countPremium = adsSettings.countPremium || 1;
 
-    // Vérifier si l'utilisateur est premium
+    // Vérifier si l'utilisateur est premium ou admin
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userIsPremium = user.premium === true || user.role === 'admin';
     setIsPremium(userIsPremium);
     
-    // Si les pubs sont désactivées globalement
-    if (!adsEnabled) {
+    console.log('User data:', user);
+    console.log('Is Premium/Admin:', userIsPremium);
+    console.log('Ads enabled:', adsEnabled);
+    
+    // Admins et Premium: jamais de pubs
+    if (!adsEnabled || userIsPremium) {
       setShowAds(false);
       setVideoStarted(true);
       setAdsCount(0);
-    } else if (userIsPremium) {
-      // Premium: pas de pubs au début, juste X à la fin
-      setShowAds(false);
-      setVideoStarted(true);
-      setAdsCount(countPremium);
     } else {
       // Normal: X pubs au début
       setShowAds(countNormal > 0);
@@ -90,9 +89,8 @@ export default function Player() {
   };
 
   const handleVideoEnd = () => {
-    if (isPremium) {
-      setShowEndAd(true);
-    }
+    // Pas de pub de fin pour les premium
+    // Les non-premium n'ont pas de pub de fin non plus
   };
 
   if (loading) {

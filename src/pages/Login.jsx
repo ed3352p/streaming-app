@@ -10,8 +10,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [lockoutUntil, setLockoutUntil] = useState(null);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,46 +23,8 @@ export default function Login() {
     }
   }, [isAuthenticated, user, authLoading, navigate, location.state]);
 
-  // Check lockout status
-  useEffect(() => {
-    const savedLockout = localStorage.getItem('loginLockout');
-    if (savedLockout) {
-      const lockoutTime = new Date(savedLockout);
-      if (lockoutTime > new Date()) {
-        setLockoutUntil(lockoutTime);
-      } else {
-        localStorage.removeItem('loginLockout');
-        localStorage.removeItem('loginAttempts');
-      }
-    }
-    const savedAttempts = parseInt(localStorage.getItem('loginAttempts') || '0');
-    setAttempts(savedAttempts);
-  }, []);
-
-  // Countdown timer for lockout
-  useEffect(() => {
-    if (lockoutUntil) {
-      const timer = setInterval(() => {
-        if (new Date() >= lockoutUntil) {
-          setLockoutUntil(null);
-          setAttempts(0);
-          localStorage.removeItem('loginLockout');
-          localStorage.removeItem('loginAttempts');
-        }
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [lockoutUntil]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Check if locked out
-    if (lockoutUntil && new Date() < lockoutUntil) {
-      const remainingSeconds = Math.ceil((lockoutUntil - new Date()) / 1000);
-      setError(`Trop de tentatives. Réessayez dans ${remainingSeconds} secondes.`);
-      return;
-    }
     
     setError('');
     setLoading(true);
@@ -73,32 +33,14 @@ export default function Login() {
       const sanitizedIdentifier = sanitizeInput(identifier.trim());
       const userData = await login(sanitizedIdentifier, password);
       
-      // Reset attempts on success
-      localStorage.removeItem('loginAttempts');
-      localStorage.removeItem('loginLockout');
-      
       const redirectTo = userData.role === 'admin' ? '/admin' : (location.state?.from?.pathname || '/');
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      localStorage.setItem('loginAttempts', newAttempts.toString());
-      
-      // Lock out after 5 failed attempts
-      if (newAttempts >= 5) {
-        const lockoutTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-        setLockoutUntil(lockoutTime);
-        localStorage.setItem('loginLockout', lockoutTime.toISOString());
-        setError('Trop de tentatives. Compte bloqué pendant 5 minutes.');
-      } else {
-        setError(err.message || 'Identifiant ou mot de passe incorrect');
-      }
+      setError(err.message || 'Identifiant ou mot de passe incorrect');
     } finally {
       setLoading(false);
     }
   };
-
-  const isLocked = lockoutUntil && new Date() < lockoutUntil;
 
   return (
     <div className="container" style={{ maxWidth: '450px', margin: '0 auto', padding: '40px 20px' }}>
@@ -169,7 +111,7 @@ export default function Login() {
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required
-              disabled={isLocked || loading}
+              disabled={loading}
               autoComplete="username"
               style={{
                 width: '100%',
@@ -205,7 +147,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              disabled={isLocked || loading}
+              disabled={loading}
               autoComplete="current-password"
               style={{
                 width: '100%',
@@ -241,17 +183,17 @@ export default function Login() {
         <button 
           type="submit" 
           className="btn"
-          disabled={isLocked || loading}
+          disabled={loading}
           style={{
             width: '100%',
             padding: '14px',
             fontSize: '16px',
             fontWeight: '600',
-            opacity: (isLocked || loading) ? 0.6 : 1,
-            cursor: (isLocked || loading) ? 'not-allowed' : 'pointer'
+            opacity: loading ? 0.6 : 1,
+            cursor: loading ? 'not-allowed' : 'pointer'
           }}
         >
-          {loading ? 'Connexion en cours...' : isLocked ? 'Compte bloqué' : 'Se connecter'}
+          {loading ? 'Connexion en cours...' : 'Se connecter'}
         </button>
         
         <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', marginTop: '24px' }}>
