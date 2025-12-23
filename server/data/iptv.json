@@ -1,0 +1,19 @@
+[
+  {
+    "id": "Kanali7.al",
+    "name": "Kanali 7 Ⓢ",
+    "url": "https://fe.tring.al/delta/105/out/u/1200_1.m3u8",
+    "logo": "https://imgs.search.brave.com/Xviw_1iG5b-trKp_CHk8Lfr57uxrBWWVg5Keyr9MXhU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc2Vla2xvZ28u/Y29tL2xvZ28tcG5n/LzQ5LzEva2FuYWw3/LWxvZ28tcG5nX3Nl/ZWtsb2dvLTQ5OTY2/Ny5wbmc",
+    "group": "Albania",
+    "createdAt": "2025-12-23T06:40:11.326Z",
+    "updatedAt": "2025-12-23T06:41:21.046Z"
+  },
+  {
+    "id": "channel-349",
+    "name": "TVA Ⓖ",
+    "url": "https://tvalive.akamaized.net/hls/live/2012413/tva01/master.m3u8",
+    "logo": "https://imgs.search.brave.com/p8r0JwxYlWVcC4z8gcWSS0C6SSTdotIF8iZmVqBVaWE/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pbWFn/ZXMuc2Vla2xvZ28u/Y29tL2xvZ28tcG5n/LzMyLzIvdHZhLWxv/Z28tcG5nX3NlZWts/b2dvLTMyMzU5NC5w/bmc",
+    "group": "Canada",
+    "createdAt": "2025-12-23T06:43:24.386Z"
+  }
+]

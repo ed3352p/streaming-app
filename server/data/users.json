@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1766474373942,
+    "email": "edrrf213@gmail.com",
+    "username": "admin2",
+    "passwordHash": "$2a$12$Izn.gjoC7iWJ3VKbFTxaD.yYN.Us1.s/Jgj3ectEs3rDMc14.kX.K",
+    "role": "admin",
+    "premium": true,
+    "name": "admin",
+    "mustChangePassword": false,
+    "createdAt": "2025-12-23T07:19:33.942Z",
+    "passwordChangedAt": "2025-12-23T07:20:31.864Z"
+  }
+]

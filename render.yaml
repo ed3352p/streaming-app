@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: streaming-app
+    env: node
+    buildCommand: |
+      npm install
+      cd ..
+      npm install
+      npm run build
+      cp -r dist ../server/public
+    startCommand: cd server && npm install && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    plan: free
