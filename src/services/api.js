@@ -35,7 +35,23 @@ class ApiService {
       headers,
     });
 
-    const data = await response.json();
+    let data;
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType && contentType.includes('application/json')) {
+      const text = await response.text();
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Réponse invalide du serveur');
+        }
+      } else {
+        data = {};
+      }
+    } else {
+      data = {};
+    }
 
     if (!response.ok) {
       throw new Error(data.error || 'Une erreur est survenue');
@@ -542,6 +558,14 @@ class ApiService {
     return this.request('/api/access-code/redeem', {
       method: 'POST',
       body: JSON.stringify({ code }),
+    });
+  }
+
+  // ============ SCRAPER ============
+  async scrapeUrl(url) {
+    return this.request('/api/scrape', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
     });
   }
 }

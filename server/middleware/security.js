@@ -1,10 +1,10 @@
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 
-// Enhanced rate limiting for authentication
+// Enhanced rate limiting for authentication - DISABLED
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
+  max: 999999, // DISABLED
   message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -18,10 +18,10 @@ export const authLimiter = rateLimit({
   }
 });
 
-// Strict rate limiting for registration
+// Strict rate limiting for registration - DISABLED
 export const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // 3 registrations per hour
+  max: 999999, // DISABLED
   message: 'Trop de créations de compte. Réessayez dans 1 heure.',
   skipSuccessfulRequests: false,
   handler: (req, res) => {
@@ -32,10 +32,10 @@ export const registerLimiter = rateLimit({
   }
 });
 
-// API rate limiting
+// API rate limiting - DISABLED (set to very high limit)
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200, // Augmenté de 100 à 200
+  max: 999999,
   message: 'Trop de requêtes. Réessayez plus tard.',
   handler: (req, res) => {
     res.status(429).json({
@@ -45,10 +45,10 @@ export const apiLimiter = rateLimit({
   }
 });
 
-// Payment rate limiting (plus permissif)
+// Payment rate limiting (plus permissif) - DISABLED
 export const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 paiements par 15 minutes
+  max: 999999, // DISABLED
   message: 'Trop de tentatives de paiement.',
   skipSuccessfulRequests: false,
   handler: (req, res) => {
@@ -59,10 +59,10 @@ export const paymentLimiter = rateLimit({
   }
 });
 
-// Upload rate limiting
+// Upload rate limiting - DISABLED
 export const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 10,
+  max: 999999, // DISABLED
   message: 'Limite d\'uploads atteinte. Réessayez dans 1 heure.',
   handler: (req, res) => {
     res.status(429).json({

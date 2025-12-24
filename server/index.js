@@ -186,7 +186,7 @@ app.use(helmet({
 
 // CORS with strict origin control
 app.use(cors({
-  origin: ['https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+  origin: ['https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -208,14 +208,14 @@ app.use(mongoSanitize());
 // Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// Apply API rate limiting to all API routes (sauf paiements)
-app.use('/api', (req, res, next) => {
-  // Exclure les routes de paiement du rate limiter global
-  if (req.path.startsWith('/payment/') || req.path.startsWith('/subscription/')) {
-    return next();
-  }
-  return apiLimiter(req, res, next);
-});
+// Apply API rate limiting to all API routes (sauf paiements) - DISABLED
+// app.use('/api', (req, res, next) => {
+//   // Exclure les routes de paiement du rate limiter global
+//   if (req.path.startsWith('/payment/') || req.path.startsWith('/subscription/')) {
+//     return next();
+//   }
+//   return apiLimiter(req, res, next);
+// });
 
 // Global rate limiter - DISABLED
 // const globalLimiter = rateLimit({
@@ -357,7 +357,7 @@ function requireAdmin(req, res, next) {
 
 // ============ AUTH ROUTES ============
 
-app.post('/api/auth/login', authLimiter, async (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     let { identifier, password } = req.body;
     
@@ -413,7 +413,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', registerLimiter, async (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   try {
     let { email, username, password, name } = req.body;
     
@@ -1421,7 +1421,7 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 }
 });
 
-app.post('/api/upload/init', authenticateToken, requireAdmin, uploadLimiter, (req, res) => {
+app.post('/api/upload/init', authenticateToken, requireAdmin, (req, res) => {
   const { filename, totalChunks, fileSize } = req.body;
   const uploadId = uploadHandler.initializeUpload(filename, totalChunks, fileSize);
   res.json({ uploadId });
@@ -1515,7 +1515,7 @@ app.get('/api/payment/btc-rate', async (req, res) => {
 });
 
 // Create BTC payment
-app.post('/api/payment/create', paymentLimiter, authenticateToken, async (req, res) => {
+app.post('/api/payment/create', authenticateToken, async (req, res) => {
   try {
     const { planId, promoCode } = req.body;
     
@@ -1806,6 +1806,74 @@ app.post('/api/access-code/redeem', authenticateToken, (req, res) => {
   } catch (err) {
     logger.error('Access code redemption error', { error: err.message });
     res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ============ SCRAPER ROUTE ============
+app.post('/api/scrape', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { url } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL requise' });
+    }
+
+    // Retry logic with exponential backoff
+    let lastError;
+    const maxRetries = 3;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Fetch the HTML content with realistic headers
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Cache-Control': 'max-age=0'
+          },
+          redirect: 'follow'
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const html = await response.text();
+        
+        if (html.length < 100) {
+          throw new Error('Réponse HTML trop courte, probablement bloquée');
+        }
+        
+        return res.json({ html });
+        
+      } catch (error) {
+        lastError = error;
+        logger.warn(`Scraping attempt ${attempt}/${maxRetries} failed`, { 
+          error: error.message, 
+          url 
+        });
+        
+        if (attempt < maxRetries) {
+          // Exponential backoff: 1s, 2s, 4s
+          const delay = Math.pow(2, attempt - 1) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    // All retries failed
+    throw lastError;
+    
+  } catch (error) {
+    logger.error('Scraping error after retries', { error: error.message, url: req.body.url });
+    res.status(500).json({ error: 'Erreur lors de la récupération des données: ' + error.message });
   }
 });
 

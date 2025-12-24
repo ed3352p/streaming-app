@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Plus, Edit, Trash2, Users, Tv, Megaphone, Upload, BarChart3, Key } from 'lucide-react';
+import { Film, Plus, Edit, Trash2, Users, Tv, Megaphone, Upload, BarChart3, Key, Download } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
@@ -143,6 +143,14 @@ export default function Dashboard() {
         <a href="/admin/access-codes" className="btn" style={{background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
           <Key style={{width: '20px', height: '20px'}} />
           Codes d'Accès
+        </a>
+        <a href="/admin/bulk-scraper" className="btn" style={{background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+          <Download style={{width: '20px', height: '20px'}} />
+          Scraper en masse
+        </a>
+        <a href="/admin/movies" className="btn" style={{background: 'linear-gradient(135deg, #ef4444, #dc2626)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+          <Film style={{width: '20px', height: '20px'}} />
+          Gérer les Films
         </a>
       </div>
 

@@ -155,7 +155,14 @@ export default function Player() {
             movie.videoUrl.includes('mixdrop')
           ) ? (
             // Lecteur iframe
-            <div ref={playerRef}>
+            <div ref={playerRef} style={{
+              position: 'relative',
+              paddingBottom: '56.25%',
+              height: 0,
+              overflow: 'hidden',
+              borderRadius: '16px',
+              background: '#000'
+            }}>
               <iframe
                 src={
                   movie.videoUrl.includes('youtube.com/watch?v=') 
@@ -165,16 +172,20 @@ export default function Player() {
                     : movie.videoUrl
                 }
                 title={movie.title}
-                width="100%"
-                height="500"
                 scrolling="no"
                 frameBorder="0"
                 allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                referrerPolicy="no-referrer"
+                sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
                 webkitallowfullscreen="true"
                 mozallowfullscreen="true"
                 style={{
-                  borderRadius: '16px',
-                  background: '#000',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
                   border: 'none'
                 }}
               />

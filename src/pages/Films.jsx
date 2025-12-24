@@ -18,6 +18,9 @@ export default function Films() {
       });
   }, []);
 
+  // Extract unique genres from movies
+  const availableGenres = ['all', ...new Set(movies.map(m => m.genre).filter(Boolean))];
+
   const filteredMovies = movies.filter(movie => {
     const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || movie.genre === filter;
@@ -62,27 +65,18 @@ export default function Films() {
           </div>
 
           <div className="filters">
-            <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
-              Tous ({movies.length})
-            </button>
-            <button className={`filter-btn ${filter === 'Action' ? 'active' : ''}`} onClick={() => setFilter('Action')}>
-              Action
-            </button>
-            <button className={`filter-btn ${filter === 'Sci-Fi' ? 'active' : ''}`} onClick={() => setFilter('Sci-Fi')}>
-              Sci-Fi
-            </button>
-            <button className={`filter-btn ${filter === 'Drame' ? 'active' : ''}`} onClick={() => setFilter('Drame')}>
-              Drame
-            </button>
-            <button className={`filter-btn ${filter === 'Comédie' ? 'active' : ''}`} onClick={() => setFilter('Comédie')}>
-              Comédie
-            </button>
-            <button className={`filter-btn ${filter === 'Horreur' ? 'active' : ''}`} onClick={() => setFilter('Horreur')}>
-              Horreur
-            </button>
-            <button className={`filter-btn ${filter === 'Thriller' ? 'active' : ''}`} onClick={() => setFilter('Thriller')}>
-              Thriller
-            </button>
+            {availableGenres.map(genre => {
+              const count = genre === 'all' ? movies.length : movies.filter(m => m.genre === genre).length;
+              return (
+                <button 
+                  key={genre}
+                  className={`filter-btn ${filter === genre ? 'active' : ''}`} 
+                  onClick={() => setFilter(genre)}
+                >
+                  {genre === 'all' ? 'Tous' : genre} ({count})
+                </button>
+              );
+            })}
           </div>
 
           <div style={{

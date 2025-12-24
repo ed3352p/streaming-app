@@ -33,6 +33,8 @@ const Payment = lazy(() => import("./pages/Payment"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const AccessCodes = lazy(() => import("./pages/admin/AccessCodes"));
 const RedeemCode = lazy(() => import("./pages/RedeemCode"));
+const BulkScraper = lazy(() => import("./pages/admin/BulkScraper"));
+const ManageMovies = lazy(() => import("./pages/admin/ManageMovies"));
 
 // Loading fallback component
 function LoadingFallback() {
@@ -153,6 +155,21 @@ export default function App() {
             <Route path="/admin/access-codes" element={
               <ProtectedRoute requireAdmin>
                 <AccessCodes />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/bulk-scraper" element={
+              <ProtectedRoute requireAdmin>
+                <BulkScraper />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/movies" element={
+              <ProtectedRoute requireAdmin>
+                <ManageMovies />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/edit-movie/:id" element={
+              <ProtectedRoute requireAdmin>
+                <EditMovie />
               </ProtectedRoute>
             } />
             </Routes>
