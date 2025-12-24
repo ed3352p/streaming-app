@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Play, Tv, CreditCard, User, LogOut, Shield, Sparkles, Film, Menu, X } from 'lucide-react';
+import { Play, Tv, CreditCard, User, LogOut, Shield, Sparkles, Film, Menu, X, Key } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function NavbarComponent() {
@@ -143,6 +143,12 @@ export default function NavbarComponent() {
             label="Premium" 
             active={isActive('/subscribe')}
             premium
+          />
+          <NavLink 
+            href="/redeem-code" 
+            icon={Key} 
+            label="Code" 
+            active={isActive('/redeem-code')}
           />
           
           {user ? (

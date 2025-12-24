@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "code": "WELCOME2025",
+    "discount": 20,
+    "type": "percentage",
+    "maxUses": 100,
+    "usedCount": 0,
+    "validUntil": "2025-12-31T23:59:59.999Z",
+    "active": true
+  },
+  {
+    "id": 2,
+    "code": "CRYPTO50",
+    "discount": 50,
+    "type": "percentage",
+    "maxUses": 50,
+    "usedCount": 0,
+    "validUntil": "2025-06-30T23:59:59.999Z",
+    "active": true
+  }
+]

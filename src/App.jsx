@@ -25,6 +25,14 @@ const AddSeries = lazy(() => import("./pages/admin/AddSeries"));
 const ManageSeries = lazy(() => import("./pages/admin/ManageSeries"));
 const EditSeries = lazy(() => import("./pages/admin/EditSeries"));
 const ManageAds = lazy(() => import("./pages/admin/ManageAds"));
+const Analytics = lazy(() => import("./pages/admin/Analytics"));
+const UploadVideo = lazy(() => import("./pages/admin/UploadVideo"));
+const Search = lazy(() => import("./pages/Search"));
+const Watchlist = lazy(() => import("./pages/Watchlist"));
+const Payment = lazy(() => import("./pages/Payment"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const AccessCodes = lazy(() => import("./pages/admin/AccessCodes"));
+const RedeemCode = lazy(() => import("./pages/RedeemCode"));
 
 // Loading fallback component
 function LoadingFallback() {
@@ -76,6 +84,11 @@ export default function App() {
             <Route path="/movie/:id" element={<Movie />} />
             <Route path="/login" element={<Login />} />
             <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/payment/:paymentId" element={<Payment />} />
+            <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/redeem-code" element={<RedeemCode />} />
             
             {/* Player route */}
             <Route path="/player/:id" element={<Player />} />
@@ -125,6 +138,21 @@ export default function App() {
             <Route path="/admin/ads" element={
               <ProtectedRoute requireAdmin>
                 <ManageAds />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/analytics" element={
+              <ProtectedRoute requireAdmin>
+                <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/upload" element={
+              <ProtectedRoute requireAdmin>
+                <UploadVideo />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/access-codes" element={
+              <ProtectedRoute requireAdmin>
+                <AccessCodes />
               </ProtectedRoute>
             } />
             </Routes>

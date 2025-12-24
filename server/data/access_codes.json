@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1766553233252,
+    "code": "538NV8CN",
+    "duration": 1,
+    "used": false,
+    "usedBy": null,
+    "usedAt": null,
+    "createdBy": 1,
+    "createdAt": "2025-12-24T05:13:53.252Z",
+    "expiresAt": null
+  },
+  {
+    "id": 1766553480165,
+    "code": "EBLPGUWI",
+    "duration": 7,
+    "used": true,
+    "usedBy": 1,
+    "usedAt": "2025-12-24T05:18:14.440Z",
+    "createdBy": 1,
+    "createdAt": "2025-12-24T05:18:00.165Z",
+    "expiresAt": "2025-12-31T05:18:14.440Z"
+  }
+]

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 const defaultAds = [
   {
@@ -43,7 +44,7 @@ const defaultAds = [
   }
 ];
 
-export function AdsManager({ adsCount = 5, onFinish, ads = defaultAds }) {
+export function AdsManager({ adsCount = 5, onFinish, ads = defaultAds, userId = null }) {
   const [currentAd, setCurrentAd] = useState(0);
   const [timeLeft, setTimeLeft] = useState(5);
   const [canSkip, setCanSkip] = useState(false);
@@ -60,6 +61,13 @@ export function AdsManager({ adsCount = 5, onFinish, ads = defaultAds }) {
     const duration = currentAdData?.duration || 5;
     setTimeLeft(duration);
     setCanSkip(false);
+
+    // Track impression
+    if (currentAdData?.id) {
+      api.trackAdImpression(currentAdData.id, userId).catch(err => 
+        console.error('Failed to track impression:', err)
+      );
+    }
 
     const countdown = setInterval(() => {
       setTimeLeft(prev => {
@@ -79,7 +87,7 @@ export function AdsManager({ adsCount = 5, onFinish, ads = defaultAds }) {
       clearInterval(countdown);
       clearTimeout(skipTimer);
     };
-  }, [currentAd, displayAds.length, onFinish, currentAdData]);
+  }, [currentAd, displayAds.length, onFinish, currentAdData, userId]);
 
   const handleSkip = () => {
     if (canSkip) {
@@ -92,6 +100,11 @@ export function AdsManager({ adsCount = 5, onFinish, ads = defaultAds }) {
   };
 
   const handleAdClick = () => {
+    if (currentAdData?.id) {
+      api.trackAdClick(currentAdData.id, userId).catch(err => 
+        console.error('Failed to track click:', err)
+      );
+    }
     if (currentAdData?.link) {
       window.open(currentAdData.link, '_blank');
     }

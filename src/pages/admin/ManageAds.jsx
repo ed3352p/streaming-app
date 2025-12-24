@@ -88,43 +88,42 @@ export default function ManageAds() {
     setAdsCountPremium(countPremium);
   };
 
-  const loadAds = () => {
-    const savedAds = JSON.parse(localStorage.getItem('streambox_ads') || 'null');
-    if (savedAds) {
-      setAds(savedAds);
-    } else {
+  const loadAds = async () => {
+    try {
+      const adsData = await api.getAds();
+      if (adsData.length > 0) {
+        setAds(adsData);
+      } else {
+        setAds(defaultAds);
+      }
+    } catch (err) {
+      console.error('Error loading ads:', err);
       setAds(defaultAds);
-      localStorage.setItem('streambox_ads', JSON.stringify(defaultAds));
     }
   };
 
   const saveAds = (newAds) => {
     setAds(newAds);
-    localStorage.setItem('streambox_ads', JSON.stringify(newAds));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingAd) {
-      const updatedAds = ads.map(ad => 
-        ad.id === editingAd.id 
-          ? { ...ad, ...formData }
-          : ad
-      );
-      saveAds(updatedAds);
-      setEditingAd(null);
-    } else {
-      const newAd = {
-        id: Date.now(),
-        ...formData,
-        active: true
-      };
-      saveAds([...ads, newAd]);
+    try {
+      if (editingAd) {
+        await api.updateAd(editingAd.id, formData);
+        setEditingAd(null);
+      } else {
+        await api.createAd(formData);
+      }
+      
+      await loadAds();
+      setFormData({ title: '', description: '', imageUrl: '', link: '', duration: 5 });
+      setShowAddForm(false);
+    } catch (err) {
+      console.error('Error saving ad:', err);
+      alert('Erreur: ' + err.message);
     }
-    
-    setFormData({ title: '', description: '', imageUrl: '', link: '', duration: 5 });
-    setShowAddForm(false);
   };
 
   const handleEdit = (ad) => {
@@ -139,17 +138,29 @@ export default function ManageAds() {
     setShowAddForm(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Supprimer cette publicité ?')) {
-      saveAds(ads.filter(ad => ad.id !== id));
+      try {
+        await api.deleteAd(id);
+        await loadAds();
+      } catch (err) {
+        console.error('Error deleting ad:', err);
+        alert('Erreur: ' + err.message);
+      }
     }
   };
 
-  const toggleActive = (id) => {
-    const updatedAds = ads.map(ad => 
-      ad.id === id ? { ...ad, active: !ad.active } : ad
-    );
-    saveAds(updatedAds);
+  const toggleActive = async (id) => {
+    try {
+      const ad = ads.find(a => a.id === id);
+      if (ad) {
+        await api.updateAd(id, { ...ad, active: !ad.active });
+        await loadAds();
+      }
+    } catch (err) {
+      console.error('Error toggling ad:', err);
+      alert('Erreur: ' + err.message);
+    }
   };
 
   const handleLogout = () => {

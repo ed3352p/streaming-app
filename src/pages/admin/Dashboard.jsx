@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, Plus, Edit, Trash2, Users, Tv, Megaphone } from 'lucide-react';
+import { Film, Plus, Edit, Trash2, Users, Tv, Megaphone, Upload, BarChart3, Key } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 
@@ -131,6 +131,18 @@ export default function Dashboard() {
         <a href="/admin/ads" className="btn" style={{background: 'linear-gradient(135deg, #ec4899, #db2777)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
           <Megaphone style={{width: '20px', height: '20px'}} />
           Gérer les Publicités
+        </a>
+        <a href="/admin/analytics" className="btn" style={{background: 'linear-gradient(135deg, #06b6d4, #0891b2)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+          <BarChart3 style={{width: '20px', height: '20px'}} />
+          Analytics & Stats
+        </a>
+        <a href="/admin/upload" className="btn" style={{background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+          <Upload style={{width: '20px', height: '20px'}} />
+          Upload Vidéo
+        </a>
+        <a href="/admin/access-codes" className="btn" style={{background: 'linear-gradient(135deg, #22c55e, #16a34a)', display: 'inline-flex', alignItems: 'center', gap: '8px'}}>
+          <Key style={{width: '20px', height: '20px'}} />
+          Codes d'Accès
         </a>
       </div>
 

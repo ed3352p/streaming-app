@@ -1,14 +1,29 @@
 [
   {
-    "id": 1766474373942,
-    "email": "edrrf213@gmail.com",
-    "username": "admin2",
-    "passwordHash": "$2a$12$4pRDK5352eEE2GJe0f9qmOnJX8mrgyPr9/JPw39Hq6xpML0V/L7ii",
+    "id": 1,
+    "email": "admin@streambox.com",
+    "username": "admin",
+    "passwordHash": "$2a$12$QT49X5TSoKGW9neLDIS4V.mnDEbQZj6uP33UX3QK6ZEsKR2drYgCm",
     "role": "admin",
     "premium": true,
-    "name": "admin",
+    "name": "Administrateur",
     "mustChangePassword": false,
-    "createdAt": "2025-12-23T07:19:33.942Z",
-    "passwordChangedAt": "2025-12-23T19:58:00.000Z"
+    "createdAt": "2025-12-23T21:11:43.649Z",
+    "subscriptionPlan": "code_7days",
+    "subscriptionStart": "2025-12-24T05:18:14.441Z",
+    "subscriptionEnd": "2025-12-31T05:18:14.441Z",
+    "lastAccessCode": "EBLPGUWI"
+  },
+  {
+    "id": 1766553275850,
+    "email": "test@sa.a",
+    "username": "test",
+    "passwordHash": "$2a$12$tlFXQCLmd2qUKFWXkYiBMuaNRV6r6VW0.zwuHBrNUhnXIPxtPVGjK",
+    "role": "user",
+    "premium": false,
+    "name": "sda",
+    "mustChangePassword": false,
+    "createdAt": "2025-12-24T05:14:35.850Z",
+    "passwordChangedAt": "2025-12-24T05:15:07.471Z"
   }
 ]

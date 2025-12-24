@@ -10,11 +10,56 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
+import { trackView, trackAdImpression, trackAdClick, trackSession, trackBandwidth, getAnalytics, getPopularContent, getStatsByGenre, getPeakHours, getTrends } from './utils/analytics.js';
+import { getGeoLocation, getClientIP } from './utils/geoip.js';
+import { uploadHandler } from './utils/uploadHandler.js';
+import { videoProcessor } from './utils/videoProcessor.js';
+import multer from 'multer';
+import { 
+  authLimiter, 
+  registerLimiter, 
+  apiLimiter, 
+  uploadLimiter,
+  paymentLimiter,
+  securityHeaders,
+  securityLogger,
+  checkBlacklist,
+  recordFailedAttempt,
+  validateInput,
+  validatePasswordStrength
+} from './middleware/security.js';
+import { 
+  validateFileType, 
+  generateSecureFilename, 
+  isSuspiciousFile,
+  validateVideoMetadata 
+} from './middleware/fileValidation.js';
+import logger from './utils/logger.js';
+import { 
+  SUBSCRIPTION_PLANS,
+  createBTCPayment,
+  verifyBTCTransaction,
+  getUserPayments,
+  getUserSubscription,
+  cancelSubscription,
+  validatePromoCode,
+  getBTCRate
+} from './utils/bitcoin.js';
+import {
+  createAccessCode,
+  redeemAccessCode,
+  getAllAccessCodes,
+  getAccessCodesStats,
+  deleteAccessCode,
+  deleteUsedCodes,
+  exportCodesCSV
+} from './utils/accessCodes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 // Secure JWT Secret management - generate and persist if not exists
@@ -63,18 +108,6 @@ function checkRateLimit(ip) {
   return { allowed: true, remaining: MAX_ATTEMPTS - attempts.count };
 }
 
-function recordFailedAttempt(ip) {
-  const now = Date.now();
-  const attempts = loginAttempts.get(ip) || { count: 0, firstAttempt: now };
-  
-  if (now - attempts.firstAttempt > RATE_LIMIT_WINDOW) {
-    loginAttempts.set(ip, { count: 1, firstAttempt: now });
-  } else {
-    attempts.count++;
-    loginAttempts.set(ip, attempts);
-  }
-}
-
 function clearRateLimit(ip) {
   loginAttempts.delete(ip);
 }
@@ -120,6 +153,15 @@ const USERS_FILE = join(DATA_DIR, 'users.json');
 const MOVIES_FILE = join(DATA_DIR, 'movies.json');
 const SERIES_FILE = join(DATA_DIR, 'series.json');
 const IPTV_FILE = join(DATA_DIR, 'iptv.json');
+const ADS_FILE = join(DATA_DIR, 'ads.json');
+const WATCHLIST_FILE = join(DATA_DIR, 'watchlist.json');
+const FAVORITES_FILE = join(DATA_DIR, 'favorites.json');
+const HISTORY_FILE = join(DATA_DIR, 'history.json');
+const BOOKMARKS_FILE = join(DATA_DIR, 'bookmarks.json');
+const PAYMENTS_FILE = join(DATA_DIR, 'payments.json');
+const SUBSCRIPTIONS_FILE = join(DATA_DIR, 'subscriptions.json');
+const PROMO_CODES_FILE = join(DATA_DIR, 'promo_codes.json');
+const ACCESS_CODES_FILE = join(DATA_DIR, 'access_codes.json');
 
 // Ensure data directory exists
 if (!existsSync(DATA_DIR)) {
@@ -151,6 +193,11 @@ app.use(cors({
   maxAge: 86400
 }));
 
+// Security middleware
+app.use(securityHeaders);
+app.use(securityLogger);
+app.use(checkBlacklist);
+
 // Body parser with size limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -161,23 +208,30 @@ app.use(mongoSanitize());
 // Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// Global rate limiter
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
-  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
-  standardHeaders: true,
-  legacyHeaders: false
+// Apply API rate limiting to all API routes (sauf paiements)
+app.use('/api', (req, res, next) => {
+  // Exclure les routes de paiement du rate limiter global
+  if (req.path.startsWith('/payment/') || req.path.startsWith('/subscription/')) {
+    return next();
+  }
+  return apiLimiter(req, res, next);
 });
-app.use(globalLimiter);
 
-// Strict rate limiter for auth endpoints
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 requests per windowMs
-  message: 'Trop de tentatives de connexion, veuillez réessayer plus tard.',
-  skipSuccessfulRequests: true
-});
+// Global rate limiter - DISABLED
+// const globalLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 1000, // Limit each IP to 1000 requests per windowMs
+//   message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+//   standardHeaders: true,
+//   legacyHeaders: false
+// });
+// app.use(globalLimiter);
+
+// Strict rate limiter for auth endpoints - DISABLED
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 20, // Limit each IP to 20 requests per windowMs
+// });
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -320,14 +374,20 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
     const user = users.find(u => u.email === identifier || u.username.toLowerCase() === identifier);
     
     if (!user) {
+      logger.logFailedLogin(req.ip, identifier);
+      recordFailedAttempt(req.ip);
       return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
     }
     
     const isValid = await bcrypt.compare(password, user.passwordHash);
     
     if (!isValid) {
+      logger.logFailedLogin(req.ip, identifier);
+      recordFailedAttempt(req.ip);
       return res.status(401).json({ error: 'Identifiant ou mot de passe incorrect' });
     }
+    
+    logger.logSuccessfulLogin(req.ip, user.id, user.username);
     
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -353,7 +413,7 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', authLimiter, async (req, res) => {
+app.post('/api/auth/register', registerLimiter, async (req, res) => {
   try {
     let { email, username, password, name } = req.body;
     
@@ -403,6 +463,8 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     
     users.push(newUser);
     writeData(USERS_FILE, users);
+    
+    logger.info('New user registered', { userId: newUser.id, email: newUser.email, ip: req.ip });
     
     const token = jwt.sign(
       { id: newUser.id, email: newUser.email, role: newUser.role },
@@ -466,7 +528,7 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
     }
     
     // Validate new password strength
-    const passwordErrors = validatePassword(newPassword);
+    const passwordErrors = validatePasswordStrength(newPassword);
     if (passwordErrors.length > 0) {
       return res.status(400).json({ error: passwordErrors.join('. ') });
     }
@@ -482,6 +544,8 @@ app.post('/api/auth/change-password', authenticateToken, async (req, res) => {
     users[userIndex].mustChangePassword = false;
     users[userIndex].passwordChangedAt = new Date().toISOString();
     writeData(USERS_FILE, users);
+    
+    logger.logPasswordChange(req.user.id, req.ip);
     
     // Delete admin credentials file if it exists (after first password change)
     const credentialsFile = join(DATA_DIR, '.admin_credentials');
@@ -773,6 +837,266 @@ app.delete('/api/iptv/:id', authenticateToken, requireAdmin, (req, res) => {
   res.json({ message: 'Chaîne supprimée' });
 });
 
+// ============ ADS ROUTES ============
+
+app.get('/api/ads', (req, res) => {
+  const ads = readData(ADS_FILE);
+  res.json(ads);
+});
+
+app.post('/api/ads', authenticateToken, requireAdmin, (req, res) => {
+  const ads = readData(ADS_FILE);
+  
+  const newAd = {
+    id: Date.now(),
+    ...req.body,
+    impressions: 0,
+    clicks: 0,
+    revenue: 0,
+    cpm: req.body.cpm || 2.5,
+    cpc: req.body.cpc || 0.5,
+    active: req.body.active !== false,
+    createdAt: new Date().toISOString()
+  };
+  
+  ads.push(newAd);
+  writeData(ADS_FILE, ads);
+  
+  res.status(201).json(newAd);
+});
+
+app.put('/api/ads/:id', authenticateToken, requireAdmin, (req, res) => {
+  const ads = readData(ADS_FILE);
+  const index = ads.findIndex(a => a.id === parseInt(req.params.id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: 'Publicité non trouvée' });
+  }
+  
+  ads[index] = { ...ads[index], ...req.body, updatedAt: new Date().toISOString() };
+  writeData(ADS_FILE, ads);
+  
+  res.json(ads[index]);
+});
+
+app.delete('/api/ads/:id', authenticateToken, requireAdmin, (req, res) => {
+  const ads = readData(ADS_FILE);
+  const index = ads.findIndex(a => a.id === parseInt(req.params.id));
+  
+  if (index === -1) {
+    return res.status(404).json({ error: 'Publicité non trouvée' });
+  }
+  
+  ads.splice(index, 1);
+  writeData(ADS_FILE, ads);
+  
+  res.json({ message: 'Publicité supprimée' });
+});
+
+// Track ad impression
+app.post('/api/ads/:id/impression', async (req, res) => {
+  try {
+    const ads = readData(ADS_FILE);
+    const adIndex = ads.findIndex(a => a.id === parseInt(req.params.id));
+    
+    if (adIndex !== -1) {
+      ads[adIndex].impressions = (ads[adIndex].impressions || 0) + 1;
+      ads[adIndex].revenue = (ads[adIndex].revenue || 0) + ((ads[adIndex].cpm || 2.5) / 1000);
+      writeData(ADS_FILE, ads);
+    }
+    
+    const ip = getClientIP(req);
+    const geo = await getGeoLocation(ip);
+    
+    trackAdImpression({
+      adId: parseInt(req.params.id),
+      userId: req.body.userId,
+      ip,
+      ...geo
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Track impression error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Track ad click
+app.post('/api/ads/:id/click', async (req, res) => {
+  try {
+    const ads = readData(ADS_FILE);
+    const adIndex = ads.findIndex(a => a.id === parseInt(req.params.id));
+    
+    if (adIndex !== -1) {
+      ads[adIndex].clicks = (ads[adIndex].clicks || 0) + 1;
+      ads[adIndex].revenue = (ads[adIndex].revenue || 0) + (ads[adIndex].cpc || 0.5);
+      writeData(ADS_FILE, ads);
+    }
+    
+    const ip = getClientIP(req);
+    const geo = await getGeoLocation(ip);
+    
+    trackAdClick({
+      adId: parseInt(req.params.id),
+      userId: req.body.userId,
+      ip,
+      ...geo
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Track click error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ============ ANALYTICS ROUTES ============
+
+// Track view
+app.post('/api/analytics/view', async (req, res) => {
+  try {
+    const ip = getClientIP(req);
+    const geo = await getGeoLocation(ip);
+    
+    trackView({
+      ...req.body,
+      ip,
+      ...geo
+    });
+    
+    // Update movie/series view count
+    if (req.body.contentType === 'movie') {
+      const movies = readData(MOVIES_FILE);
+      const movieIndex = movies.findIndex(m => m.id === parseInt(req.body.contentId));
+      if (movieIndex !== -1) {
+        movies[movieIndex].views = (movies[movieIndex].views || 0) + 1;
+        writeData(MOVIES_FILE, movies);
+      }
+    } else if (req.body.contentType === 'series') {
+      const series = readData(SERIES_FILE);
+      const seriesIndex = series.findIndex(s => s.id === parseInt(req.body.contentId));
+      if (seriesIndex !== -1) {
+        series[seriesIndex].views = (series[seriesIndex].views || 0) + 1;
+        writeData(SERIES_FILE, series);
+      }
+    }
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Track view error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Track session
+app.post('/api/analytics/session', async (req, res) => {
+  try {
+    const ip = getClientIP(req);
+    const geo = await getGeoLocation(ip);
+    
+    trackSession({
+      ...req.body,
+      ip,
+      ...geo
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Track session error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Track bandwidth
+app.post('/api/analytics/bandwidth', (req, res) => {
+  try {
+    trackBandwidth(req.body);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Track bandwidth error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get analytics data
+app.get('/api/analytics', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const timeRange = req.query.range || '24h';
+    const analytics = getAnalytics(timeRange);
+    res.json(analytics);
+  } catch (error) {
+    console.error('Get analytics error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get popular content
+app.get('/api/analytics/popular', (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const popular = getPopularContent(limit);
+    res.json(popular);
+  } catch (error) {
+    console.error('Get popular error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get stats by genre
+app.get('/api/analytics/genres', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const stats = getStatsByGenre();
+    res.json(stats);
+  } catch (error) {
+    console.error('Get genre stats error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get peak hours
+app.get('/api/analytics/peak-hours', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const peakHours = getPeakHours();
+    res.json(peakHours);
+  } catch (error) {
+    console.error('Get peak hours error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get trends
+app.get('/api/analytics/trends', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    const trends = getTrends(days);
+    res.json(trends);
+  } catch (error) {
+    console.error('Get trends error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get real-time stats
+app.get('/api/analytics/realtime', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const analytics = getAnalytics('1h');
+    const activeSessions = analytics.sessions.length;
+    const recentViews = analytics.views.length;
+    const recentBandwidth = analytics.bandwidth.reduce((sum, b) => sum + (b.bytes || 0), 0);
+    
+    res.json({
+      activeSessions,
+      recentViews,
+      bandwidthMB: (recentBandwidth / 1024 / 1024).toFixed(2),
+      sessions: analytics.sessions
+    });
+  } catch (error) {
+    console.error('Get realtime error:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // ============ USERS ROUTES (Admin) ============
 
 app.get('/api/users', authenticateToken, requireAdmin, (req, res) => {
@@ -820,6 +1144,669 @@ app.delete('/api/users/:id', authenticateToken, requireAdmin, (req, res) => {
   writeData(USERS_FILE, users);
   
   res.json({ message: 'Utilisateur supprimé' });
+});
+
+// ============ WATCHLIST ROUTES ============
+
+app.get('/api/watchlist', authenticateToken, (req, res) => {
+  const watchlist = readData(WATCHLIST_FILE);
+  const userWatchlist = watchlist.filter(w => w.userId === req.user.id);
+  res.json(userWatchlist);
+});
+
+app.post('/api/watchlist', authenticateToken, (req, res) => {
+  const watchlist = readData(WATCHLIST_FILE);
+  const { contentId, contentType, title, imageUrl } = req.body;
+  
+  const exists = watchlist.find(w => 
+    w.userId === req.user.id && w.contentId === contentId && w.contentType === contentType
+  );
+  
+  if (exists) {
+    return res.status(400).json({ error: 'Déjà dans la watchlist' });
+  }
+  
+  const newItem = {
+    id: Date.now(),
+    userId: req.user.id,
+    contentId,
+    contentType,
+    title,
+    imageUrl,
+    addedAt: new Date().toISOString()
+  };
+  
+  watchlist.push(newItem);
+  writeData(WATCHLIST_FILE, watchlist);
+  res.status(201).json(newItem);
+});
+
+app.delete('/api/watchlist/:id', authenticateToken, (req, res) => {
+  const watchlist = readData(WATCHLIST_FILE);
+  const filtered = watchlist.filter(w => 
+    !(w.id === parseInt(req.params.id) && w.userId === req.user.id)
+  );
+  
+  if (filtered.length === watchlist.length) {
+    return res.status(404).json({ error: 'Item non trouvé' });
+  }
+  
+  writeData(WATCHLIST_FILE, filtered);
+  res.json({ message: 'Retiré de la watchlist' });
+});
+
+// ============ FAVORITES ROUTES ============
+
+app.get('/api/favorites', authenticateToken, (req, res) => {
+  const favorites = readData(FAVORITES_FILE);
+  const userFavorites = favorites.filter(f => f.userId === req.user.id);
+  res.json(userFavorites);
+});
+
+app.post('/api/favorites', authenticateToken, (req, res) => {
+  const favorites = readData(FAVORITES_FILE);
+  const { contentId, contentType, title, imageUrl } = req.body;
+  
+  const exists = favorites.find(f => 
+    f.userId === req.user.id && f.contentId === contentId && f.contentType === contentType
+  );
+  
+  if (exists) {
+    return res.status(400).json({ error: 'Déjà dans les favoris' });
+  }
+  
+  const newItem = {
+    id: Date.now(),
+    userId: req.user.id,
+    contentId,
+    contentType,
+    title,
+    imageUrl,
+    addedAt: new Date().toISOString()
+  };
+  
+  favorites.push(newItem);
+  writeData(FAVORITES_FILE, favorites);
+  res.status(201).json(newItem);
+});
+
+app.delete('/api/favorites/:id', authenticateToken, (req, res) => {
+  const favorites = readData(FAVORITES_FILE);
+  const filtered = favorites.filter(f => 
+    !(f.id === parseInt(req.params.id) && f.userId === req.user.id)
+  );
+  
+  if (filtered.length === favorites.length) {
+    return res.status(404).json({ error: 'Item non trouvé' });
+  }
+  
+  writeData(FAVORITES_FILE, filtered);
+  res.json({ message: 'Retiré des favoris' });
+});
+
+// ============ HISTORY ROUTES ============
+
+app.get('/api/history', authenticateToken, (req, res) => {
+  const history = readData(HISTORY_FILE);
+  const userHistory = history
+    .filter(h => h.userId === req.user.id)
+    .sort((a, b) => new Date(b.watchedAt) - new Date(a.watchedAt))
+    .slice(0, 50);
+  res.json(userHistory);
+});
+
+app.post('/api/history', authenticateToken, (req, res) => {
+  const history = readData(HISTORY_FILE);
+  const { contentId, contentType, title, imageUrl, progress, duration } = req.body;
+  
+  const existingIndex = history.findIndex(h => 
+    h.userId === req.user.id && h.contentId === contentId && h.contentType === contentType
+  );
+  
+  if (existingIndex >= 0) {
+    history[existingIndex] = {
+      ...history[existingIndex],
+      progress,
+      duration,
+      watchedAt: new Date().toISOString()
+    };
+  } else {
+    history.push({
+      id: Date.now(),
+      userId: req.user.id,
+      contentId,
+      contentType,
+      title,
+      imageUrl,
+      progress,
+      duration,
+      watchedAt: new Date().toISOString()
+    });
+  }
+  
+  writeData(HISTORY_FILE, history);
+  res.json({ message: 'Historique mis à jour' });
+});
+
+app.delete('/api/history/:id', authenticateToken, (req, res) => {
+  const history = readData(HISTORY_FILE);
+  const filtered = history.filter(h => 
+    !(h.id === parseInt(req.params.id) && h.userId === req.user.id)
+  );
+  
+  writeData(HISTORY_FILE, filtered);
+  res.json({ message: 'Retiré de l\'historique' });
+});
+
+// ============ BOOKMARKS ROUTES ============
+
+app.get('/api/bookmarks/:contentId', authenticateToken, (req, res) => {
+  const bookmarks = readData(BOOKMARKS_FILE);
+  const bookmark = bookmarks.find(b => 
+    b.userId === req.user.id && b.contentId === parseInt(req.params.contentId)
+  );
+  res.json(bookmark || null);
+});
+
+app.post('/api/bookmarks', authenticateToken, (req, res) => {
+  const bookmarks = readData(BOOKMARKS_FILE);
+  const { contentId, contentType, timestamp, duration } = req.body;
+  
+  const existingIndex = bookmarks.findIndex(b => 
+    b.userId === req.user.id && b.contentId === contentId
+  );
+  
+  if (existingIndex >= 0) {
+    bookmarks[existingIndex] = {
+      ...bookmarks[existingIndex],
+      timestamp,
+      duration,
+      updatedAt: new Date().toISOString()
+    };
+  } else {
+    bookmarks.push({
+      id: Date.now(),
+      userId: req.user.id,
+      contentId,
+      contentType,
+      timestamp,
+      duration,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+  }
+  
+  writeData(BOOKMARKS_FILE, bookmarks);
+  res.json({ message: 'Bookmark sauvegardé' });
+});
+
+// ============ SEARCH ROUTES ============
+
+app.get('/api/search', (req, res) => {
+  const { q, genre, year, minRating, maxDuration, quality, sort } = req.query;
+  
+  const movies = readData(MOVIES_FILE);
+  const series = readData(SERIES_FILE);
+  let results = [...movies.map(m => ({...m, type: 'movie'})), ...series.map(s => ({...s, type: 'series'}))];
+  
+  if (q) {
+    const query = q.toLowerCase();
+    results = results.filter(item => 
+      item.title?.toLowerCase().includes(query) ||
+      item.description?.toLowerCase().includes(query) ||
+      item.genre?.toLowerCase().includes(query)
+    );
+  }
+  
+  if (genre) {
+    results = results.filter(item => item.genre === genre);
+  }
+  
+  if (year) {
+    results = results.filter(item => item.year === parseInt(year));
+  }
+  
+  if (minRating) {
+    results = results.filter(item => (item.rating || 0) >= parseFloat(minRating));
+  }
+  
+  if (maxDuration) {
+    results = results.filter(item => !item.duration || item.duration <= parseInt(maxDuration));
+  }
+  
+  if (quality) {
+    results = results.filter(item => item.quality === quality);
+  }
+  
+  if (sort === 'popularity') {
+    results.sort((a, b) => (b.views || 0) - (a.views || 0));
+  } else if (sort === 'rating') {
+    results.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  } else if (sort === 'year') {
+    results.sort((a, b) => (b.year || 0) - (a.year || 0));
+  } else if (sort === 'title') {
+    results.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+  }
+  
+  res.json(results);
+});
+
+app.get('/api/search/suggestions', (req, res) => {
+  const { q } = req.query;
+  if (!q || q.length < 2) {
+    return res.json([]);
+  }
+  
+  const movies = readData(MOVIES_FILE);
+  const series = readData(SERIES_FILE);
+  const all = [...movies, ...series];
+  
+  const query = q.toLowerCase();
+  const suggestions = all
+    .filter(item => item.title?.toLowerCase().includes(query))
+    .slice(0, 10)
+    .map(item => ({
+      id: item.id,
+      title: item.title,
+      type: movies.includes(item) ? 'movie' : 'series'
+    }));
+  
+  res.json(suggestions);
+});
+
+// ============ VIDEO UPLOAD ROUTES ============
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 }
+});
+
+app.post('/api/upload/init', authenticateToken, requireAdmin, uploadLimiter, (req, res) => {
+  const { filename, totalChunks, fileSize } = req.body;
+  const uploadId = uploadHandler.initializeUpload(filename, totalChunks, fileSize);
+  res.json({ uploadId });
+});
+
+app.post('/api/upload/chunk', authenticateToken, requireAdmin, upload.single('chunk'), async (req, res) => {
+  try {
+    const { uploadId, chunkIndex } = req.body;
+    const chunkData = req.file.buffer;
+    
+    // Validate chunk size
+    if (chunkData.length > 100 * 1024 * 1024) {
+      logger.security('Suspicious large chunk upload attempt', { 
+        userId: req.user.id, 
+        ip: req.ip, 
+        size: chunkData.length 
+      });
+      return res.status(400).json({ error: 'Chunk trop volumineux' });
+    }
+    
+    const result = await uploadHandler.saveChunk(uploadId, parseInt(chunkIndex), chunkData);
+    res.json(result);
+  } catch (err) {
+    logger.error('Upload chunk error', { error: err.message, userId: req.user.id });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/upload/finalize', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { uploadId } = req.body;
+    const result = await uploadHandler.finalizeUpload(uploadId);
+    
+    // Validate the uploaded file
+    const isValid = validateFileType(result.path, 'video/mp4');
+    if (!isValid) {
+      logger.security('Invalid video file uploaded', { 
+        userId: req.user.id, 
+        filename: result.filename,
+        ip: req.ip
+      });
+      return res.status(400).json({ error: 'Type de fichier invalide' });
+    }
+    
+    logger.logFileUpload(req.user.id, result.filename, result.size, req.ip);
+    res.json(result);
+  } catch (err) {
+    logger.error('Finalize upload error', { error: err.message, userId: req.user.id });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/upload/status/:uploadId', authenticateToken, requireAdmin, (req, res) => {
+  const status = uploadHandler.getUploadStatus(req.params.uploadId);
+  if (!status) {
+    return res.status(404).json({ error: 'Upload not found' });
+  }
+  res.json(status);
+});
+
+app.post('/api/video/process', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { videoPath, baseName } = req.body;
+    const result = await videoProcessor.processUploadedVideo(videoPath, baseName);
+    res.json(result);
+  } catch (err) {
+    console.error('Video processing error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.use('/uploads', express.static(join(__dirname, 'uploads')));
+app.use('/encoded', express.static(join(__dirname, 'encoded')));
+app.use('/thumbnails', express.static(join(__dirname, 'thumbnails')));
+
+// ============ PAYMENT & SUBSCRIPTION ROUTES ============
+
+// Get subscription plans
+app.get('/api/subscription/plans', (req, res) => {
+  res.json(SUBSCRIPTION_PLANS);
+});
+
+// Get BTC rate
+app.get('/api/payment/btc-rate', async (req, res) => {
+  try {
+    const rate = await getBTCRate();
+    res.json({ rate });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur récupération taux BTC' });
+  }
+});
+
+// Create BTC payment
+app.post('/api/payment/create', paymentLimiter, authenticateToken, async (req, res) => {
+  try {
+    const { planId, promoCode } = req.body;
+    
+    if (!SUBSCRIPTION_PLANS[planId]) {
+      return res.status(400).json({ error: 'Plan invalide' });
+    }
+
+    const payment = await createBTCPayment(req.user.id, planId, promoCode);
+    logger.info('BTC payment created', { userId: req.user.id, planId, paymentId: payment.id });
+    
+    res.json(payment);
+  } catch (err) {
+    logger.error('Payment creation error', { error: err.message, userId: req.user.id });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Verify BTC transaction
+app.post('/api/payment/verify', authenticateToken, async (req, res) => {
+  try {
+    const { paymentId, txHash } = req.body;
+    
+    if (!paymentId || !txHash) {
+      return res.status(400).json({ error: 'paymentId et txHash requis' });
+    }
+
+    const result = await verifyBTCTransaction(paymentId, txHash);
+    logger.security('BTC payment verified', { 
+      userId: req.user.id, 
+      paymentId, 
+      txHash,
+      ip: req.ip 
+    });
+    
+    res.json(result);
+  } catch (err) {
+    logger.error('Payment verification error', { error: err.message, userId: req.user.id });
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get payment status
+app.get('/api/payment/:paymentId', authenticateToken, (req, res) => {
+  try {
+    const payments = readData(PAYMENTS_FILE);
+    const payment = payments.find(p => 
+      p.id === req.params.paymentId && p.userId === req.user.id
+    );
+    
+    if (!payment) {
+      return res.status(404).json({ error: 'Paiement non trouvé' });
+    }
+    
+    res.json(payment);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get user payments history
+app.get('/api/payments', authenticateToken, (req, res) => {
+  try {
+    const payments = getUserPayments(req.user.id);
+    res.json(payments);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get user subscription
+app.get('/api/subscription', authenticateToken, (req, res) => {
+  try {
+    const subscription = getUserSubscription(req.user.id);
+    res.json(subscription || null);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Cancel subscription
+app.post('/api/subscription/cancel', authenticateToken, (req, res) => {
+  try {
+    const success = cancelSubscription(req.user.id);
+    if (success) {
+      logger.info('Subscription canceled', { userId: req.user.id });
+      res.json({ message: 'Abonnement annulé' });
+    } else {
+      res.status(404).json({ error: 'Aucun abonnement actif' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Validate promo code
+app.post('/api/promo/validate', (req, res) => {
+  try {
+    const { code } = req.body;
+    const result = validatePromoCode(code);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Admin: Get all payments
+app.get('/api/admin/payments', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const payments = readData(PAYMENTS_FILE);
+    res.json(payments);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Admin: Get all subscriptions
+app.get('/api/admin/subscriptions', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const subscriptions = readData(SUBSCRIPTIONS_FILE);
+    res.json(subscriptions);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Admin: Manage promo codes
+app.get('/api/admin/promo-codes', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const promoCodes = readData(PROMO_CODES_FILE);
+    res.json(promoCodes);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.post('/api/admin/promo-codes', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const promoCodes = readData(PROMO_CODES_FILE);
+    const newPromo = {
+      id: Date.now(),
+      ...req.body,
+      usedCount: 0,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+    promoCodes.push(newPromo);
+    writeData(PROMO_CODES_FILE, promoCodes);
+    res.status(201).json(newPromo);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.put('/api/admin/promo-codes/:id', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const promoCodes = readData(PROMO_CODES_FILE);
+    const index = promoCodes.findIndex(p => p.id === parseInt(req.params.id));
+    if (index === -1) {
+      return res.status(404).json({ error: 'Code promo non trouvé' });
+    }
+    promoCodes[index] = { ...promoCodes[index], ...req.body };
+    writeData(PROMO_CODES_FILE, promoCodes);
+    res.json(promoCodes[index]);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+app.delete('/api/admin/promo-codes/:id', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const promoCodes = readData(PROMO_CODES_FILE);
+    const filtered = promoCodes.filter(p => p.id !== parseInt(req.params.id));
+    writeData(PROMO_CODES_FILE, filtered);
+    res.json({ message: 'Code promo supprimé' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// ============ ACCESS CODES ROUTES ============
+
+// Generate access codes (Admin)
+app.post('/api/admin/access-codes/generate', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const { duration, quantity } = req.body;
+    
+    if (!duration || duration <= 0) {
+      return res.status(400).json({ error: 'Durée invalide' });
+    }
+    
+    if (!quantity || quantity <= 0 || quantity > 100) {
+      return res.status(400).json({ error: 'Quantité invalide (max 100)' });
+    }
+    
+    const codes = createAccessCode(duration, quantity, req.user.id);
+    logger.info('Access codes generated', { 
+      adminId: req.user.id, 
+      duration, 
+      quantity,
+      ip: req.ip 
+    });
+    
+    res.json({ codes, count: codes.length });
+  } catch (err) {
+    logger.error('Access code generation error', { error: err.message });
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get all access codes (Admin)
+app.get('/api/admin/access-codes', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const codes = getAllAccessCodes();
+    res.json(codes);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Get access codes stats (Admin)
+app.get('/api/admin/access-codes/stats', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const stats = getAccessCodesStats();
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Delete access code (Admin)
+app.delete('/api/admin/access-codes/:id', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const success = deleteAccessCode(parseInt(req.params.id));
+    if (success) {
+      res.json({ message: 'Code supprimé' });
+    } else {
+      res.status(404).json({ error: 'Code non trouvé' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Delete all used codes (Admin)
+app.delete('/api/admin/access-codes/used', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const count = deleteUsedCodes();
+    res.json({ message: `${count} codes utilisés supprimés` });
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Export codes as CSV (Admin)
+app.get('/api/admin/access-codes/export', authenticateToken, requireAdmin, (req, res) => {
+  try {
+    const csv = exportCodesCSV();
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=access_codes.csv');
+    res.send(csv);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// Redeem access code (User)
+app.post('/api/access-code/redeem', authenticateToken, (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Code requis' });
+    }
+    
+    const result = redeemAccessCode(code, req.user.id);
+    
+    if (result.success) {
+      logger.info('Access code redeemed', { 
+        userId: req.user.id, 
+        code, 
+        duration: result.duration,
+        ip: req.ip 
+      });
+      res.json(result);
+    } else {
+      res.status(400).json(result);
+    }
+  } catch (err) {
+    logger.error('Access code redemption error', { error: err.message });
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
 });
 
 // Catch-all for SPA in production

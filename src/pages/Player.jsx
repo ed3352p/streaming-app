@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { AdsManager } from '../components/AdsManager';
+import { useViewTracking } from '../utils/useTracking';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 export default function Player() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [showAds, setShowAds] = useState(true);
   const [showEndAd, setShowEndAd] = useState(false);
   const [videoStarted, setVideoStarted] = useState(false);
@@ -13,7 +16,10 @@ export default function Player() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [adsCount, setAdsCount] = useState(5);
+  const [ads, setAds] = useState([]);
   const playerRef = useRef(null);
+
+  useViewTracking(movie?.id, 'movie', movie?.title, movie?.genre);
 
   const toggleFullscreen = () => {
     if (!playerRef.current) return;
@@ -35,40 +41,40 @@ export default function Player() {
   }, []);
 
   useEffect(() => {
-    // Charger les paramètres des pubs
-    const adsSettings = JSON.parse(localStorage.getItem('streambox_ads_settings') || '{}');
-    const adsEnabled = adsSettings.enabled !== false;
-    const countNormal = adsSettings.countNormal || 5;
-    const countPremium = adsSettings.countPremium || 1;
-
-    // Vérifier si l'utilisateur est premium ou admin
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const userIsPremium = user.premium === true || user.role === 'admin';
-    setIsPremium(userIsPremium);
-    
-    console.log('User data:', user);
-    console.log('Is Premium/Admin:', userIsPremium);
-    console.log('Ads enabled:', adsEnabled);
-    
-    // Admins et Premium: jamais de pubs
-    if (!adsEnabled || userIsPremium) {
-      setShowAds(false);
-      setVideoStarted(true);
-      setAdsCount(0);
-    } else {
-      // Normal: X pubs au début
-      setShowAds(countNormal > 0);
-      setVideoStarted(countNormal === 0);
-      setAdsCount(countNormal);
-    }
-
-    // Charger les infos du film depuis l'API
-    const loadMovie = async () => {
+    const loadData = async () => {
       try {
+        // Charger les paramètres des pubs
+        const adsSettings = JSON.parse(localStorage.getItem('streambox_ads_settings') || '{}');
+        const adsEnabled = adsSettings.enabled !== false;
+        const countNormal = adsSettings.countNormal || 5;
+        const countPremium = adsSettings.countPremium || 1;
+
+        // Charger les publicités depuis l'API
+        const adsData = await api.getAds();
+        const activeAds = adsData.filter(ad => ad.active);
+        setAds(activeAds.length > 0 ? activeAds : []);
+
+        // Vérifier si l'utilisateur est premium ou admin
+        const userIsPremium = user?.premium === true || user?.role === 'admin';
+        setIsPremium(userIsPremium);
+        
+        // Admins et Premium: jamais de pubs
+        if (!adsEnabled || userIsPremium) {
+          setShowAds(false);
+          setVideoStarted(true);
+          setAdsCount(0);
+        } else {
+          // Normal: X pubs au début
+          setShowAds(countNormal > 0);
+          setVideoStarted(countNormal === 0);
+          setAdsCount(countNormal);
+        }
+
+        // Charger les infos du film depuis l'API
         const data = await api.getMovie(id);
         setMovie(data);
       } catch (err) {
-        console.error('Erreur chargement film:', err);
+        console.error('Erreur chargement:', err);
         const movies = JSON.parse(localStorage.getItem('movies') || '[]');
         const foundMovie = movies.find(m => m.id === parseInt(id));
         setMovie(foundMovie);
@@ -76,8 +82,8 @@ export default function Player() {
         setLoading(false);
       }
     };
-    loadMovie();
-  }, [id]);
+    loadData();
+  }, [id, user]);
 
   const handleAdsFinish = () => {
     setShowAds(false);
@@ -125,7 +131,7 @@ export default function Player() {
         </div>
       ) : showAds ? (
         <div>
-          <AdsManager adsCount={adsCount} onFinish={handleAdsFinish} />
+          <AdsManager adsCount={adsCount} onFinish={handleAdsFinish} ads={ads} userId={user?.id} />
           <div style={{textAlign: 'center', marginTop: '20px'}}>
             <p style={{color: '#cbd5e1', marginBottom: '10px'}}>Veuillez patienter pendant les publicités...</p>
             <p style={{color: '#22c55e', fontSize: '14px'}}>
