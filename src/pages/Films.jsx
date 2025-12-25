@@ -7,6 +7,8 @@ export default function Films() {
   const [movies, setMovies] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   useEffect(() => {
     api.getMovies()
@@ -26,6 +28,17 @@ export default function Films() {
     const matchesFilter = filter === 'all' || movie.genre === filter;
     return matchesSearch && matchesFilter;
   });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentMovies = filteredMovies.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filter]);
 
   return (
     <div className="container">
@@ -79,12 +92,53 @@ export default function Films() {
             })}
           </div>
 
+          {/* Pagination info */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            padding: '15px',
+            background: 'rgba(139, 92, 246, 0.1)',
+            borderRadius: '12px',
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            flexWrap: 'wrap',
+            gap: '15px'
+          }}>
+            <div style={{color: '#94a3b8', fontSize: '14px'}}>
+              Affichage de <strong style={{color: '#a78bfa'}}>{startIndex + 1}</strong> à <strong style={{color: '#a78bfa'}}>{Math.min(endIndex, filteredMovies.length)}</strong> sur <strong style={{color: '#a78bfa'}}>{filteredMovies.length}</strong> films
+            </div>
+            <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
+              <label style={{color: '#94a3b8', fontSize: '14px'}}>Films par page:</label>
+              <select 
+                value={itemsPerPage} 
+                onChange={(e) => {
+                  setItemsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  background: 'rgba(139, 92, 246, 0.1)',
+                  color: '#a78bfa',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+            </div>
+          </div>
+
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
             gap: '25px'
           }}>
-            {filteredMovies.map(movie => (
+            {currentMovies.map(movie => (
               <MovieCard 
                 key={movie.id} 
                 id={movie.id}
@@ -102,6 +156,95 @@ export default function Films() {
             <div style={{textAlign: 'center', padding: '60px 20px'}}>
               <Film style={{width: '64px', height: '64px', color: '#64748b', margin: '0 auto 20px'}} />
               <p style={{color: '#64748b', fontSize: '18px'}}>Aucun film trouvé</p>
+            </div>
+          )}
+
+          {/* Pagination controls */}
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '10px',
+              marginTop: '40px',
+              flexWrap: 'wrap'
+            }}>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: currentPage === 1 ? '#334155' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  opacity: currentPage === 1 ? 0.5 : 1,
+                  transition: 'all 0.2s'
+                }}
+              >
+                ← Précédent
+              </button>
+
+              <div style={{
+                display: 'flex',
+                gap: '5px',
+                flexWrap: 'wrap',
+                justifyContent: 'center'
+              }}>
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 4) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 3) {
+                    pageNum = totalPages - 6 + i;
+                  } else {
+                    pageNum = currentPage - 3 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      style={{
+                        padding: '10px 15px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: currentPage === pageNum ? 'linear-gradient(135deg, #8b5cf6, #7c3aed)' : 'rgba(139, 92, 246, 0.1)',
+                        color: currentPage === pageNum ? 'white' : '#a78bfa',
+                        fontWeight: currentPage === pageNum ? '700' : '500',
+                        cursor: 'pointer',
+                        minWidth: '45px',
+                        transition: 'all 0.2s',
+                        boxShadow: currentPage === pageNum ? '0 4px 12px rgba(139, 92, 246, 0.4)' : 'none'
+                      }}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: currentPage === totalPages ? '#334155' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  opacity: currentPage === totalPages ? 0.5 : 1,
+                  transition: 'all 0.2s'
+                }}
+              >
+                Suivant →
+              </button>
             </div>
           )}
         </>

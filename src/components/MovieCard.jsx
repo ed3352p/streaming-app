@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 export default function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre, year, description }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleWatch = (e) => {
     e.preventDefault();
@@ -33,21 +34,53 @@ export default function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre
         boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.3)'
       }}
     >
-      <img 
-        src={imageUrl || "https://via.placeholder.com/300x450?text=" + encodeURIComponent(title)} 
-        alt={title}
-        onError={(e) => {
-          e.target.src = "https://via.placeholder.com/300x450?text=" + encodeURIComponent(title);
-        }}
-        style={{
+      {imageUrl && !imageError ? (
+        <img 
+          src={imageUrl}
+          alt={title}
+          onError={() => setImageError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: 'block',
+            filter: isHovered ? 'brightness(0.4)' : 'brightness(1)',
+            transition: 'filter 0.3s ease'
+          }}
+        />
+      ) : (
+        <div style={{
           width: '100%',
           height: '100%',
-          objectFit: 'cover',
-          display: 'block',
+          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          textAlign: 'center',
           filter: isHovered ? 'brightness(0.4)' : 'brightness(1)',
           transition: 'filter 0.3s ease'
-        }}
-      />
+        }}>
+          <div style={{
+            fontSize: '64px',
+            marginBottom: '15px',
+            opacity: 0.3
+          }}>
+            🎬
+          </div>
+          <div style={{
+            color: '#64748b',
+            fontSize: '14px',
+            fontWeight: '600',
+            lineHeight: '1.4',
+            wordBreak: 'break-word',
+            maxWidth: '90%'
+          }}>
+            {title}
+          </div>
+        </div>
+      )}
       
       {/* Overlay avec infos au hover */}
       <div style={{

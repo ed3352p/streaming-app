@@ -470,33 +470,61 @@ export default function BulkScraper() {
               disabled={scraping || importing}
               style={{flex: 1, padding: '12px', borderRadius: '8px', border: '1px solid rgba(139, 92, 246, 0.3)', background: 'rgba(139, 92, 246, 0.05)', color: 'white'}}
             />
-            <button 
-              onClick={extractMoviesFromPage}
-              disabled={scraping || importing}
-              style={{
-                padding: '12px 24px',
-                borderRadius: '8px',
-                border: 'none',
-                background: scraping ? '#64748b' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-                color: 'white',
-                fontWeight: '600',
-                cursor: scraping ? 'not-allowed' : 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {scraping ? '⏳ Extraction...' : '🚀 Extraire'}
-            </button>
+            {scraping ? (
+              <button 
+                onClick={() => setStopScraping(true)}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                ⏹️ Arrêter
+              </button>
+            ) : (
+              <button 
+                onClick={extractMoviesFromPage}
+                disabled={importing}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: importing ? '#64748b' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: importing ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                🚀 Extraire
+              </button>
+            )}
           </div>
         </div>
 
         {/* Liste des films extraits */}
         {extractedMovies.length > 0 && (
           <div style={{background: 'linear-gradient(145deg, #1e293b, #0f172a)', padding: '25px', borderRadius: '16px', border: '1px solid rgba(34, 197, 94, 0.3)', marginBottom: '30px'}}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-              <h3 style={{color: '#22c55e', fontSize: '18px'}}>
-                ✅ Étape 2 : Sélectionner les films ({selectedMovies.size}/{extractedMovies.length})
-              </h3>
-              <div style={{display: 'flex', gap: '10px'}}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px'}}>
+              <div>
+                <h3 style={{color: '#22c55e', fontSize: '20px', marginBottom: '8px'}}>
+                  ✅ Étape 2 : Sélectionner les films
+                </h3>
+                <div style={{display: 'flex', gap: '20px', fontSize: '14px'}}>
+                  <span style={{color: '#94a3b8'}}>
+                    <strong style={{color: '#22c55e'}}>{extractedMovies.length}</strong> films extraits
+                  </span>
+                  <span style={{color: '#94a3b8'}}>
+                    <strong style={{color: '#8b5cf6'}}>{selectedMovies.size}</strong> sélectionnés
+                  </span>
+                </div>
+              </div>
+              <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
                 <button 
                   onClick={selectAll}
                   disabled={importing}
@@ -514,34 +542,104 @@ export default function BulkScraper() {
               </div>
             </div>
 
-            <div style={{maxHeight: '400px', overflowY: 'auto', marginBottom: '20px'}}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: '15px',
+              maxHeight: '600px',
+              overflowY: 'auto',
+              marginBottom: '20px',
+              padding: '5px'
+            }}>
               {extractedMovies.map((movie) => (
                 <div 
                   key={movie.id}
                   onClick={() => !importing && toggleMovieSelection(movie.id)}
                   style={{
-                    padding: '12px',
-                    marginBottom: '8px',
-                    borderRadius: '8px',
-                    border: selectedMovies.has(movie.id) ? '2px solid #22c55e' : '1px solid rgba(255,255,255,0.1)',
-                    background: selectedMovies.has(movie.id) ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)',
+                    position: 'relative',
+                    borderRadius: '12px',
+                    border: selectedMovies.has(movie.id) ? '3px solid #22c55e' : '2px solid rgba(255,255,255,0.1)',
+                    background: selectedMovies.has(movie.id) ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.05)',
                     cursor: importing ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
+                    transition: 'all 0.3s ease',
+                    overflow: 'hidden',
+                    aspectRatio: '2/3',
+                    transform: selectedMovies.has(movie.id) ? 'scale(0.98)' : 'scale(1)',
+                    boxShadow: selectedMovies.has(movie.id) ? '0 0 20px rgba(34, 197, 94, 0.4)' : 'none'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!importing) {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!importing) {
+                      e.currentTarget.style.transform = selectedMovies.has(movie.id) ? 'scale(0.98)' : 'scale(1)';
+                      e.currentTarget.style.boxShadow = selectedMovies.has(movie.id) ? '0 0 20px rgba(34, 197, 94, 0.4)' : 'none';
+                    }
                   }}
                 >
-                  <input 
-                    type="checkbox"
-                    checked={selectedMovies.has(movie.id)}
-                    onChange={() => {}}
-                    disabled={importing}
-                    style={{width: '18px', height: '18px', cursor: 'pointer'}}
-                  />
-                  <div style={{flex: 1}}>
-                    <div style={{color: 'white', fontWeight: '500'}}>{movie.title}</div>
-                    <div style={{color: '#94a3b8', fontSize: '13px'}}>Année: {movie.year}</div>
+                  {/* Image placeholder */}
+                  <div style={{
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '48px',
+                    color: 'rgba(139, 92, 246, 0.3)'
+                  }}>
+                    🎬
+                  </div>
+                  
+                  {/* Overlay avec infos */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 70%, transparent 100%)',
+                    padding: '40px 12px 12px',
+                    color: 'white'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '4px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {movie.title}
+                    </div>
+                    <div style={{
+                      color: '#94a3b8',
+                      fontSize: '12px'
+                    }}>
+                      {movie.year}
+                    </div>
+                  </div>
+                  
+                  {/* Checkbox en haut à droite */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '8px',
+                    right: '8px',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: selectedMovies.has(movie.id) ? '#22c55e' : 'rgba(0,0,0,0.6)',
+                    border: selectedMovies.has(movie.id) ? '2px solid #fff' : '2px solid rgba(255,255,255,0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '16px',
+                    backdropFilter: 'blur(8px)',
+                    transition: 'all 0.2s'
+                  }}>
+                    {selectedMovies.has(movie.id) ? '✓' : ''}
                   </div>
                 </div>
               ))}

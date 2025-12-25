@@ -175,7 +175,7 @@ export default function Player() {
                 scrolling="no"
                 frameBorder="0"
                 allowFullScreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="no-referrer"
                 sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-presentation"
                 webkitallowfullscreen="true"

@@ -8,7 +8,8 @@
     "imageUrl": "https://media.themoviedb.org/t/p/original/udAxQEORq2I5wxI97N2TEqdhzBE.jpg",
     "videoUrl": "https://sharecloudy.com/iframe/qWS1VKQBTc",
     "rating": 0,
-    "createdAt": "2025-12-24T07:34:43.908Z"
+    "createdAt": "2025-12-24T07:34:43.908Z",
+    "views": 1
   },
   {
     "id": 1766561684503,
@@ -19,7 +20,8 @@
     "imageUrl": "https://media.themoviedb.org/t/p/original/bkLaI0JqXb1lRqGti0zGgUMb1Uk.jpg",
     "videoUrl": "https://sharecloudy.com/iframe/vUoP6stU1O",
     "rating": 0,
-    "createdAt": "2025-12-24T07:34:44.503Z"
+    "createdAt": "2025-12-24T07:34:44.503Z",
+    "views": 19
   },
   {
     "id": 1766561685201,
