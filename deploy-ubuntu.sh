@@ -194,7 +194,7 @@ print_success "Répertoires créés"
 
 # 13. Configuration PM2
 print_step "Configuration de PM2"
-cat > "$APP_DIR/ecosystem.config.js" << 'EOF'
+cat > "$APP_DIR/ecosystem.config.cjs" << 'EOF'
 module.exports = {
   apps: [{
     name: 'lumixar-backend',
@@ -217,7 +217,7 @@ module.exports = {
 EOF
 
 pm2 delete lumixar-backend 2>/dev/null || true
-pm2 start ecosystem.config.js
+pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup systemd -u root --hp /root > /dev/null 2>&1 || true
 print_success "PM2 configuré et démarré"
