@@ -9,7 +9,7 @@ function simpleHash(str) {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash;
   }
-  const salt = 'streambox_2024';
+  const salt = 'lumixar_2024';
   let hash2 = 0;
   const combined = str + salt;
   for (let i = 0; i < combined.length; i++) {
@@ -22,7 +22,7 @@ export async function hashPassword(password) {
   // Check if crypto.subtle is available (HTTPS only)
   if (typeof crypto !== 'undefined' && crypto.subtle) {
     const encoder = new TextEncoder();
-    const data = encoder.encode(password + 'streambox_salt_2024');
+    const data = encoder.encode(password + 'lumixar_salt_2024');
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');

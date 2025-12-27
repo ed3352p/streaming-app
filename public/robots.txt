@@ -1,0 +1,68 @@
+# robots.txt for Lumixar - Optimized for SEO
+# Updated: 2025
+
+# Google Bot - Full Access
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /payment/
+Disallow: /redeem-code
+Crawl-delay: 0
+
+# Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /admin/
+
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 1
+
+# Yandex Bot
+User-agent: Yandex
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 1
+
+# All other bots
+User-agent: *
+Allow: /
+Allow: /films
+Allow: /series
+Allow: /iptv
+Allow: /search
+Allow: /subscribe
+Allow: /login
+Disallow: /admin/
+Disallow: /api/
+Disallow: /payment/
+Disallow: /player/
+Disallow: /watchlist
+Disallow: /redeem-code
+Crawl-delay: 2
+
+# Block bad bots
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Sitemap locations
+Sitemap: https://lumixar.com/sitemap.xml
+Sitemap: https://lumixar.com/sitemap-movies.xml
+Sitemap: https://lumixar.com/sitemap-series.xml
+
+# Host (preferred domain)
+Host: https://lumixar.com

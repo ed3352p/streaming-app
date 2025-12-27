@@ -8,7 +8,7 @@ export default function Footer() {
       marginTop: 'auto'
     }}>
       <p style={{fontSize: 'clamp(12px, 2.5vw, 14px)', marginBottom: '10px'}}>
-        © 2025 StreamBox. Tous droits réservés.
+        © 2025 Lumixar. Tous droits réservés.
       </p>
       <div style={{display: 'flex', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', fontSize: 'clamp(12px, 2.5vw, 14px)'}}>
         <a href="#" style={{color: 'white', padding: '4px 8px'}}>Facebook</a>

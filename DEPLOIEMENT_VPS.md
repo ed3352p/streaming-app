@@ -1,365 +1,502 @@
-# Guide de Déploiement sur VPS Ubuntu
+# 🚀 Guide de Déploiement VPS - Lumixar
 
-Ce guide vous explique comment déployer votre application de streaming sur un VPS Ubuntu.
+Guide complet pour déployer Lumixar sur un VPS Ubuntu/Debian.
 
-## Prérequis
+---
 
-- Un VPS Ubuntu (20.04 ou plus récent)
-- Accès SSH au VPS
-- Un nom de domaine (optionnel mais recommandé)
-- Node.js 18+ installé sur le VPS
+## 📋 Prérequis
 
-## Étape 1: Préparer votre VPS
+### Serveur VPS
+- **OS**: Ubuntu 20.04/22.04 LTS ou Debian 11/12
+- **RAM**: Minimum 2 GB (4 GB recommandé)
+- **CPU**: 2 vCPU minimum
+- **Stockage**: 20 GB minimum
+- **Accès**: SSH root ou sudo
 
-### 1.1 Connexion SSH
+### Domaine
+- Nom de domaine configuré (ex: lumixar.com)
+- DNS pointant vers l'IP du VPS (A record)
+- Sous-domaine www optionnel
+
+---
+
+## 🎯 Installation Automatique (Recommandé)
+
+### Étape 1: Connexion SSH
 ```bash
-ssh root@votre-ip-vps
-# ou
-ssh votre-utilisateur@votre-ip-vps
+ssh root@VOTRE_IP_VPS
 ```
 
-### 1.2 Mettre à jour le système
+### Étape 2: Télécharger le script
 ```bash
-sudo apt update
-sudo apt upgrade -y
+cd /root
+wget https://raw.githubusercontent.com/votre-repo/lumixar/main/vps-install.sh
+chmod +x vps-install.sh
 ```
 
-### 1.3 Installer Node.js et npm
+### Étape 3: Lancer l'installation
 ```bash
-# Installer Node.js 20.x (LTS)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Vérifier l'installation
-node --version
-npm --version
+./vps-install.sh
 ```
 
-### 1.4 Installer PM2 (gestionnaire de processus)
+Le script vous demandera:
+- **Nom de domaine**: lumixar.com
+- **Email**: votre@email.com (pour SSL)
+
+**Durée**: ~10-15 minutes
+
+---
+
+## 🔧 Installation Manuelle
+
+### 1. Mise à jour du système
 ```bash
-sudo npm install -g pm2
+apt update && apt upgrade -y
 ```
 
-### 1.5 Installer Nginx (serveur web)
+### 2. Installation de Node.js 20
 ```bash
-sudo apt install -y nginx
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+node -v  # Vérifier la version
+npm -v
 ```
 
-## Étape 2: Transférer votre application sur le VPS
-
-### Option A: Avec Git (recommandé)
+### 3. Installation de PM2
 ```bash
-# Sur votre VPS
-cd /var/www
-sudo mkdir streaming-app
-sudo chown -R $USER:$USER streaming-app
-cd streaming-app
-
-# Cloner votre dépôt (si vous utilisez Git)
-git clone https://github.com/votre-username/votre-repo.git .
+npm install -g pm2
+pm2 startup systemd
 ```
 
-### Option B: Avec SCP (transfert direct)
+### 4. Installation de Nginx
 ```bash
-# Sur votre machine locale (Windows PowerShell)
-# Compresser le projet
-cd C:\Users\ed3352\Desktop\web
-tar -czf streaming-app.tar.gz streaming-app/
-
-# Transférer vers le VPS
-scp streaming-app.tar.gz votre-utilisateur@votre-ip-vps:/var/www/
-
-# Sur le VPS, décompresser
-ssh votre-utilisateur@votre-ip-vps
-cd /var/www
-tar -xzf streaming-app.tar.gz
-cd streaming-app
+apt install -y nginx
+systemctl enable nginx
+systemctl start nginx
 ```
 
-### Option C: Avec SFTP (FileZilla, WinSCP)
-1. Ouvrir WinSCP ou FileZilla
-2. Connecter au VPS (IP, port 22, utilisateur, mot de passe)
-3. Transférer le dossier `streaming-app` vers `/var/www/`
-
-## Étape 3: Configurer l'application
-
-### 3.1 Créer le fichier .env
+### 5. Installation de Certbot (SSL)
 ```bash
-cd /var/www/streaming-app
+apt install -y certbot python3-certbot-nginx
+```
+
+### 6. Configuration du pare-feu
+```bash
+ufw allow ssh
+ufw allow http
+ufw allow https
+ufw enable
+```
+
+### 7. Déploiement du code
+
+#### Option A: Git
+```bash
+mkdir -p /var/www/lumixar
+cd /var/www/lumixar
+git clone https://github.com/votre-repo/lumixar.git .
+```
+
+#### Option B: SCP (depuis votre PC)
+```bash
+# Sur votre PC local
+scp -r ./streaming-app/* root@VOTRE_IP:/var/www/lumixar/
+```
+
+### 8. Installation des dépendances
+```bash
+cd /var/www/lumixar
+npm install --production
+```
+
+### 9. Configuration de l'environnement
+```bash
+cp .env.example .env
 nano .env
 ```
 
-Ajouter le contenu suivant:
+Configurez vos variables:
 ```env
-# URL de base (remplacer par votre domaine ou IP)
-VITE_API_URL=http://votre-domaine.com
-# ou
-VITE_API_URL=http://votre-ip-vps
-
-# Clé secrète JWT (générer une clé forte)
-JWT_SECRET=votre-cle-secrete-tres-longue-et-aleatoire-ici
-
-# Port du serveur backend
-PORT=3001
-
-# Mode production
 NODE_ENV=production
+PORT=3000
+DATABASE_URL=votre_database_url
+JWT_SECRET=votre_secret_jwt_securise
 ```
 
-**Important**: Générez une clé JWT sécurisée:
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
-
-### 3.2 Installer les dépendances
-
-```bash
-# Dépendances du frontend
-npm install
-
-# Dépendances du backend
-cd server
-npm install
-cd ..
-```
-
-### 3.3 Construire le frontend
+### 10. Build de l'application
 ```bash
 npm run build
 ```
 
-Cela créera un dossier `dist` avec les fichiers statiques optimisés.
-
-## Étape 4: Configurer PM2
-
-### 4.1 Créer le fichier de configuration PM2
-```bash
-nano ecosystem.config.js
-```
-
-Ajouter:
-```javascript
-module.exports = {
-  apps: [{
-    name: 'streaming-app',
-    script: './server/index.js',
-    instances: 1,
-    autorestart: true,
-    watch: false,
-    max_memory_restart: '1G',
-    env: {
-      NODE_ENV: 'production',
-      PORT: 3001
-    }
-  }]
-}
-```
-
-### 4.2 Démarrer l'application avec PM2
+### 11. Démarrage avec PM2
 ```bash
 pm2 start ecosystem.config.js
 pm2 save
-pm2 startup
 ```
 
-Suivez les instructions affichées pour configurer le démarrage automatique.
-
-### 4.3 Vérifier le statut
+### 12. Configuration Nginx
 ```bash
-pm2 status
-pm2 logs streaming-app
+# Copier la configuration
+cp nginx.conf /etc/nginx/sites-available/lumixar
+
+# Créer le lien symbolique
+ln -s /etc/nginx/sites-available/lumixar /etc/nginx/sites-enabled/
+
+# Supprimer la config par défaut
+rm /etc/nginx/sites-enabled/default
+
+# Tester la configuration
+nginx -t
+
+# Redémarrer Nginx
+systemctl restart nginx
 ```
 
-## Étape 5: Configurer Nginx
-
-### 5.1 Créer la configuration Nginx
+### 13. Installation SSL (Let's Encrypt)
 ```bash
-sudo nano /etc/nginx/sites-available/streaming-app
+certbot --nginx -d lumixar.com -d www.lumixar.com
 ```
 
-Ajouter:
-```nginx
-server {
-    listen 80;
-    server_name votre-domaine.com www.votre-domaine.com;
-    # ou pour IP uniquement:
-    # server_name votre-ip-vps;
+Suivez les instructions et choisissez la redirection HTTPS.
 
-    root /var/www/streaming-app/dist;
-    index index.html;
-
-    # Logs
-    access_log /var/log/nginx/streaming-app-access.log;
-    error_log /var/log/nginx/streaming-app-error.log;
-
-    # Servir les fichiers statiques
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # Proxy pour l'API backend
-    location /api {
-        proxy_pass http://localhost:3001;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    # Cache pour les assets statiques
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-}
-```
-
-### 5.2 Activer le site
-```bash
-sudo ln -s /etc/nginx/sites-available/streaming-app /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
-```
-
-## Étape 6: Configurer le Firewall
-
-```bash
-# Autoriser HTTP et HTTPS
-sudo ufw allow 'Nginx Full'
-sudo ufw allow OpenSSH
-sudo ufw enable
-sudo ufw status
-```
-
-## Étape 7: SSL/HTTPS avec Let's Encrypt (Recommandé)
-
-### 7.1 Installer Certbot
-```bash
-sudo apt install -y certbot python3-certbot-nginx
-```
-
-### 7.2 Obtenir un certificat SSL
-```bash
-sudo certbot --nginx -d votre-domaine.com -d www.votre-domaine.com
-```
-
-Suivez les instructions. Certbot configurera automatiquement Nginx pour HTTPS.
-
-### 7.3 Renouvellement automatique
-```bash
-sudo certbot renew --dry-run
-```
-
-Le renouvellement automatique est configuré par défaut.
-
-## Étape 8: Vérification et Tests
-
-### 8.1 Vérifier que tout fonctionne
+### 14. Vérification
 ```bash
 # Vérifier PM2
 pm2 status
 
 # Vérifier Nginx
-sudo systemctl status nginx
+systemctl status nginx
 
 # Vérifier les logs
-pm2 logs streaming-app --lines 50
-sudo tail -f /var/log/nginx/streaming-app-error.log
+pm2 logs lumixar
 ```
 
-### 8.2 Tester l'application
-Ouvrir dans un navigateur:
-- `http://votre-domaine.com` ou `http://votre-ip-vps`
-- Vérifier la connexion admin
+---
 
-### 8.3 Récupérer les identifiants admin
+## 📊 Commandes Utiles
+
+### PM2
 ```bash
-cat /var/www/streaming-app/server/data/.admin_credentials
+# Voir le status
+pm2 status
+
+# Voir les logs
+pm2 logs lumixar
+
+# Redémarrer l'app
+pm2 restart lumixar
+
+# Arrêter l'app
+pm2 stop lumixar
+
+# Supprimer l'app
+pm2 delete lumixar
+
+# Monitoring
+pm2 monit
+
+# Interface web (port 9615)
+pm2 web
 ```
 
-## Commandes Utiles
-
-### Gestion PM2
+### Nginx
 ```bash
-pm2 restart streaming-app    # Redémarrer l'app
-pm2 stop streaming-app        # Arrêter l'app
-pm2 logs streaming-app        # Voir les logs
-pm2 monit                     # Monitorer en temps réel
+# Tester la configuration
+nginx -t
+
+# Redémarrer
+systemctl restart nginx
+
+# Recharger (sans downtime)
+systemctl reload nginx
+
+# Voir les logs
+tail -f /var/log/nginx/lumixar-access.log
+tail -f /var/log/nginx/lumixar-error.log
 ```
 
-### Gestion Nginx
+### SSL
 ```bash
-sudo systemctl restart nginx  # Redémarrer Nginx
-sudo systemctl status nginx   # Statut de Nginx
-sudo nginx -t                 # Tester la config
+# Renouveler manuellement
+certbot renew
+
+# Tester le renouvellement
+certbot renew --dry-run
+
+# Voir les certificats
+certbot certificates
 ```
 
-### Mise à jour de l'application
+### Système
 ```bash
-cd /var/www/streaming-app
-git pull                      # Si vous utilisez Git
-npm install                   # Mettre à jour les dépendances
-npm run build                 # Reconstruire le frontend
-cd server && npm install      # Mettre à jour le backend
-pm2 restart streaming-app     # Redémarrer l'app
+# Espace disque
+df -h
+
+# Mémoire
+free -h
+
+# Processus
+htop
+
+# Logs système
+journalctl -xe
 ```
 
-## Sécurité Supplémentaire
+---
+
+## 🔄 Mise à Jour de l'Application
+
+### Méthode 1: Script automatique
+```bash
+cd /var/www/lumixar
+./update.sh
+```
+
+### Méthode 2: Manuelle
+```bash
+cd /var/www/lumixar
+
+# Pull les changements
+git pull
+
+# Installer les nouvelles dépendances
+npm install --production
+
+# Rebuild
+npm run build
+
+# Redémarrer
+pm2 restart lumixar
+```
+
+---
+
+## 💾 Backup et Restauration
+
+### Backup Manuel
+```bash
+/root/backup-lumixar.sh
+```
+
+Les backups sont stockés dans `/root/backups/`
+
+### Backup Automatique
+Le script d'installation configure un backup quotidien à 3h du matin.
+
+Vérifier le cron:
+```bash
+crontab -l
+```
+
+### Restauration
+```bash
+cd /var/www
+tar -xzf /root/backups/lumixar_YYYYMMDD_HHMMSS.tar.gz
+pm2 restart lumixar
+```
+
+---
+
+## 🔒 Sécurité
 
 ### 1. Changer le port SSH (optionnel)
 ```bash
-sudo nano /etc/ssh/sshd_config
+nano /etc/ssh/sshd_config
 # Changer Port 22 à Port 2222
-sudo systemctl restart sshd
+systemctl restart sshd
+
+# Mettre à jour le pare-feu
+ufw allow 2222/tcp
+ufw delete allow ssh
 ```
 
-### 2. Désactiver la connexion root
+### 2. Désactiver l'authentification par mot de passe
 ```bash
-sudo nano /etc/ssh/sshd_config
-# Mettre PermitRootLogin no
-sudo systemctl restart sshd
+nano /etc/ssh/sshd_config
+# PasswordAuthentication no
+systemctl restart sshd
 ```
 
 ### 3. Installer Fail2Ban
 ```bash
-sudo apt install -y fail2ban
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
+apt install -y fail2ban
+systemctl enable fail2ban
+systemctl start fail2ban
 ```
 
-## Dépannage
+### 4. Mises à jour automatiques
+```bash
+apt install -y unattended-upgrades
+dpkg-reconfigure -plow unattended-upgrades
+```
+
+---
+
+## 📈 Monitoring et Performance
+
+### 1. Installer Netdata (optionnel)
+```bash
+bash <(curl -Ss https://my-netdata.io/kickstart.sh)
+```
+Accès: http://VOTRE_IP:19999
+
+### 2. Logs en temps réel
+```bash
+# Logs combinés
+pm2 logs
+
+# Logs Nginx
+tail -f /var/log/nginx/lumixar-access.log
+
+# Logs système
+journalctl -f
+```
+
+### 3. Monitoring PM2
+```bash
+pm2 monit
+```
+
+---
+
+## 🐛 Dépannage
 
 ### L'application ne démarre pas
 ```bash
-pm2 logs streaming-app --lines 100
-# Vérifier les erreurs
+# Vérifier les logs
+pm2 logs lumixar --lines 100
+
+# Vérifier le port
+netstat -tulpn | grep 3000
+
+# Redémarrer
+pm2 restart lumixar
 ```
 
 ### Nginx retourne 502 Bad Gateway
 ```bash
-# Vérifier que le backend tourne
+# Vérifier que l'app tourne
 pm2 status
+
 # Vérifier les logs Nginx
-sudo tail -f /var/log/nginx/streaming-app-error.log
+tail -f /var/log/nginx/lumixar-error.log
+
+# Vérifier la config Nginx
+nginx -t
 ```
 
-### Problème de permissions
+### SSL ne fonctionne pas
 ```bash
-sudo chown -R $USER:$USER /var/www/streaming-app
-chmod -R 755 /var/www/streaming-app
+# Vérifier les certificats
+certbot certificates
+
+# Renouveler
+certbot renew --force-renewal
+
+# Vérifier la config Nginx
+nginx -t
 ```
 
-## Support
+### Manque de mémoire
+```bash
+# Vérifier l'utilisation
+free -h
 
-Pour toute question, vérifiez:
-1. Les logs PM2: `pm2 logs streaming-app`
-2. Les logs Nginx: `sudo tail -f /var/log/nginx/streaming-app-error.log`
-3. Les logs système: `sudo journalctl -xe`
+# Créer un swap file
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+```
+
+### Disque plein
+```bash
+# Vérifier l'espace
+df -h
+
+# Nettoyer les logs
+pm2 flush
+journalctl --vacuum-time=7d
+
+# Nettoyer apt
+apt clean
+apt autoremove
+```
 
 ---
 
-**Votre application devrait maintenant être accessible sur votre domaine ou IP VPS!** 🚀
+## 🎯 Optimisations
+
+### 1. Cache Nginx
+Ajoutez dans la config Nginx:
+```nginx
+proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=my_cache:10m max_size=1g inactive=60m;
+```
+
+### 2. Compression Brotli
+```bash
+apt install -y nginx-module-brotli
+```
+
+### 3. HTTP/3 (QUIC)
+Nécessite Nginx compilé avec support QUIC.
+
+### 4. CDN
+Utilisez Cloudflare pour:
+- Cache global
+- Protection DDoS
+- SSL gratuit
+- Optimisation automatique
+
+---
+
+## 📞 Support
+
+### Logs importants
+- **PM2**: `pm2 logs lumixar`
+- **Nginx**: `/var/log/nginx/lumixar-*.log`
+- **Système**: `journalctl -xe`
+
+### Vérifications
+```bash
+# Status général
+pm2 status
+systemctl status nginx
+ufw status
+
+# Ports ouverts
+netstat -tulpn
+
+# Processus
+ps aux | grep node
+```
+
+---
+
+## ✅ Checklist Post-Installation
+
+- [ ] Application accessible via HTTPS
+- [ ] Redirection HTTP → HTTPS fonctionne
+- [ ] SSL valide (cadenas vert)
+- [ ] PM2 démarre au boot
+- [ ] Backup automatique configuré
+- [ ] Pare-feu activé
+- [ ] Logs accessibles
+- [ ] Monitoring en place
+- [ ] DNS configuré correctement
+- [ ] Email de contact SSL valide
+
+---
+
+## 🚀 Prochaines Étapes
+
+1. **Configurer un CDN** (Cloudflare)
+2. **Mettre en place un monitoring** (Uptime Robot)
+3. **Configurer les alertes** (email/Slack)
+4. **Optimiser les performances** (cache, compression)
+5. **Sauvegardes externes** (S3, Backblaze)
+
+---
+
+*Guide créé le 27 décembre 2025 pour Lumixar v1.0*

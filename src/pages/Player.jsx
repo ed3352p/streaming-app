@@ -44,7 +44,7 @@ export default function Player() {
     const loadData = async () => {
       try {
         // Charger les paramètres des pubs
-        const adsSettings = JSON.parse(localStorage.getItem('streambox_ads_settings') || '{}');
+        const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
         const adsEnabled = adsSettings.enabled !== false;
         const countNormal = adsSettings.countNormal || 5;
         const countPremium = adsSettings.countPremium || 1;
@@ -125,7 +125,7 @@ export default function Player() {
           <AdsManager adsCount={1} onFinish={handleEndAdFinish} />
           <div style={{textAlign: 'center', marginTop: '20px'}}>
             <p style={{color: '#94a3b8', fontSize: '14px'}}>
-              Merci d'avoir regardé ce film sur StreamBox !
+              Merci d'avoir regardé ce film sur Lumixar !
             </p>
           </div>
         </div>

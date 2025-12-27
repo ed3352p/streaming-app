@@ -70,7 +70,7 @@ export default function Login() {
             <Lock style={{ width: '32px', height: '32px', color: 'white' }} />
           </div>
           <h2 style={{ margin: 0, fontSize: '28px' }}>Connexion</h2>
-          <p style={{ color: '#64748b', marginTop: '8px' }}>Accédez à votre compte StreamBox</p>
+          <p style={{ color: '#64748b', marginTop: '8px' }}>Accédez à votre compte Lumixar</p>
         </div>
         
         {error && (

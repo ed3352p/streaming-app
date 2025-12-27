@@ -4,9 +4,9 @@ import api from '../services/api';
 const defaultAds = [
   {
     id: 1,
-    title: 'StreamBox Premium',
-    description: 'Profitez de StreamBox sans publicités !',
-    imageUrl: 'https://via.placeholder.com/728x90/2563eb/ffffff?text=StreamBox+Premium+-+Sans+Pubs',
+    title: 'Lumixar Premium',
+    description: 'Profitez de Lumixar sans publicités !',
+    imageUrl: 'https://via.placeholder.com/728x90/2563eb/ffffff?text=Lumixar+Premium+-+Sans+Pubs',
     link: '/subscribe',
     duration: 5
   },

@@ -51,7 +51,7 @@ export default function NavbarComponent() {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        {/* Logo StreamBox */}
+        {/* Logo Lumixar */}
         <div 
           onClick={() => navigate('/')}
           style={{
@@ -66,7 +66,7 @@ export default function NavbarComponent() {
         >
           <img 
             src="/logo.png" 
-            alt="StreamBox Logo" 
+            alt="Lumixar Logo" 
             style={{
               height: '50px',
               width: 'auto',

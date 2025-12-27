@@ -6,9 +6,9 @@ import { useAuth } from '../../context/AuthContext';
 const defaultAds = [
   {
     id: 1,
-    title: 'StreamBox Premium',
-    description: 'Profitez de StreamBox sans publicités !',
-    imageUrl: 'https://via.placeholder.com/728x90/2563eb/ffffff?text=StreamBox+Premium+-+Sans+Pubs',
+    title: 'Lumixar Premium',
+    description: 'Profitez de Lumixar sans publicités !',
+    imageUrl: 'https://via.placeholder.com/728x90/2563eb/ffffff?text=Lumixar+Premium+-+Sans+Pubs',
     link: '/subscribe',
     duration: 5,
     active: true
@@ -74,7 +74,7 @@ export default function ManageAds() {
   }, []);
 
   const loadSettings = () => {
-    const settings = JSON.parse(localStorage.getItem('streambox_ads_settings') || '{}');
+    const settings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
     setAdsEnabled(settings.enabled !== false);
     setAdsCountNormal(settings.countNormal || 5);
     setAdsCountPremium(settings.countPremium || 1);
@@ -82,7 +82,7 @@ export default function ManageAds() {
 
   const saveSettings = (enabled, countNormal, countPremium) => {
     const settings = { enabled, countNormal, countPremium };
-    localStorage.setItem('streambox_ads_settings', JSON.stringify(settings));
+    localStorage.setItem('lumixar_ads_settings', JSON.stringify(settings));
     setAdsEnabled(enabled);
     setAdsCountNormal(countNormal);
     setAdsCountPremium(countPremium);

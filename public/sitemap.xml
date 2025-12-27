@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  
+  <!-- Page d'accueil - Priorité maximale -->
+  <url>
+    <loc>https://lumixar.com/</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Films - Haute priorité -->
+  <url>
+    <loc>https://lumixar.com/films</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  
+  <!-- Séries - Haute priorité -->
+  <url>
+    <loc>https://lumixar.com/series</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  
+  <!-- IPTV Live - Haute priorité -->
+  <url>
+    <loc>https://lumixar.com/iptv</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.90</priority>
+  </url>
+  
+  <!-- Recherche - Importante -->
+  <url>
+    <loc>https://lumixar.com/search</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+  
+  <!-- Abonnement Premium - Conversion -->
+  <url>
+    <loc>https://lumixar.com/subscribe</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  
+  <!-- Connexion -->
+  <url>
+    <loc>https://lumixar.com/login</loc>
+    <lastmod>2025-12-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>
+  
+</urlset>
