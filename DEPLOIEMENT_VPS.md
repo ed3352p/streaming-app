@@ -30,7 +30,7 @@ ssh root@VOTRE_IP_VPS
 ### Étape 2: Télécharger le script
 ```bash
 cd /root
-wget https://raw.githubusercontent.com/votre-repo/lumixar/main/vps-install.sh
+wget https://raw.githubusercontent.com/ed3352p/streaming-app/main/vps-install.sh
 chmod +x vps-install.sh
 ```
 
@@ -94,7 +94,7 @@ ufw enable
 ```bash
 mkdir -p /var/www/lumixar
 cd /var/www/lumixar
-git clone https://github.com/votre-repo/lumixar.git .
+git clone https://github.com/ed3352p/streaming-app.git .
 ```
 
 #### Option B: SCP (depuis votre PC)

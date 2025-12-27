@@ -60,9 +60,9 @@ User-agent: MJ12bot
 Disallow: /
 
 # Sitemap locations
-Sitemap: https://lumixar.com/sitemap.xml
-Sitemap: https://lumixar.com/sitemap-movies.xml
-Sitemap: https://lumixar.com/sitemap-series.xml
+Sitemap: https://lumixar.online/sitemap.xml
+Sitemap: https://lumixar.online/sitemap-movies.xml
+Sitemap: https://lumixar.online/sitemap-series.xml
 
 # Host (preferred domain)
-Host: https://lumixar.com
+Host: https://lumixar.online

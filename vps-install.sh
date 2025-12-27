@@ -88,22 +88,27 @@ ufw allow https
 ufw status
 print_success "Pare-feu configuré"
 
-# 6. Création du répertoire de l'application
-print_info "Création du répertoire de l'application..."
-mkdir -p $APP_DIR
-cd $APP_DIR
-print_success "Répertoire créé: $APP_DIR"
+# 6. Nettoyage des anciens fichiers
+if [ -d "$APP_DIR" ]; then
+    print_info "Suppression de l'ancien répertoire..."
+    rm -rf $APP_DIR
+    print_success "Ancien répertoire supprimé"
+fi
 
-# 7. Message pour le déploiement du code
-print_info "Clonez maintenant votre code dans $APP_DIR"
-echo ""
-echo "Exemple avec Git:"
-echo "  cd $APP_DIR"
-echo "  git clone https://github.com/votre-repo/lumixar.git ."
-echo ""
-echo "Ou uploadez vos fichiers via SCP/FTP"
-echo ""
-read -p "Appuyez sur Entrée une fois le code déployé..."
+# 7. Clonage du repository GitHub
+print_info "Clonage du code depuis GitHub..."
+rm -rf /tmp/lumixar-temp
+git clone https://github.com/ed3352p/streaming-app.git /tmp/lumixar-temp
+print_success "Code cloné depuis GitHub"
+
+# 8. Déplacement des fichiers vers le répertoire final
+print_info "Installation des fichiers..."
+mkdir -p $APP_DIR
+mv /tmp/lumixar-temp/* $APP_DIR/
+mv /tmp/lumixar-temp/.* $APP_DIR/ 2>/dev/null || true
+rm -rf /tmp/lumixar-temp
+cd $APP_DIR
+print_success "Fichiers installés dans $APP_DIR"
 
 # 8. Installation des dépendances Node.js
 if [ -f "$APP_DIR/package.json" ]; then
