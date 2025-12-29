@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Film, Tv, TrendingUp, Users, Play, Star } from 'lucide-react';
 import MovieCard from "../components/MovieCard";
 import api from '../services/api';
+import { ExternalAdBanner } from '../components/ExternalAdBanner';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
@@ -35,6 +36,9 @@ export default function Home() {
 
   return (
     <div>
+      {/* Bannière publicitaire en haut */}
+      <ExternalAdBanner position="top" />
+
       {/* Hero Section - Nouveau design */}
       <div className="hero-section" style={{
         position: 'relative',

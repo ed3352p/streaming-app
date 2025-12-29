@@ -3,6 +3,7 @@ import { Clock, Heart, History, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import MovieCard from '../components/MovieCard';
 import api from '../services/api';
+import { ExternalAdBanner } from '../components/ExternalAdBanner';
 
 export default function Watchlist() {
   const { user } = useAuth();
@@ -74,6 +75,8 @@ export default function Watchlist() {
 
   return (
     <div className="container" style={{paddingTop: '30px'}}>
+      <ExternalAdBanner position="top" />
+      
       <h1 style={{marginBottom: '30px'}}>Ma Collection</h1>
 
       <div style={{

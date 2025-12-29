@@ -3,6 +3,7 @@ import { Search as SearchIcon, Filter, X } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import api from '../services/api';
+import { ExternalAdBanner } from '../components/ExternalAdBanner';
 
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -94,6 +95,8 @@ export default function Search() {
 
   return (
     <div className="container" style={{paddingTop: '30px'}}>
+      <ExternalAdBanner position="top" />
+      
       <h1 style={{marginBottom: '30px'}}>Recherche</h1>
 
       <form onSubmit={handleSearch} style={{marginBottom: '30px'}}>

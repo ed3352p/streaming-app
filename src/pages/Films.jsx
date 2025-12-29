@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Film, Search } from 'lucide-react';
 import MovieCard from "../components/MovieCard";
 import api from '../services/api';
+import { ExternalAdBanner } from '../components/ExternalAdBanner';
 
 export default function Films() {
   const [movies, setMovies] = useState([]);
@@ -42,6 +43,8 @@ export default function Films() {
 
   return (
     <div className="container">
+      <ExternalAdBanner position="top" />
+      
       <div style={{marginBottom: '40px'}}>
         <h1 style={{
           fontSize: 'clamp(28px, 6vw, 48px)',

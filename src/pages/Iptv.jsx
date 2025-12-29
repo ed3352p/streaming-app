@@ -1,19 +1,54 @@
 import { useState, useEffect } from 'react';
 import { parseM3U, groupChannelsByCategory, filterChannels } from '../utils/parseM3U';
 import VideoPlayerIPTV from '../components/VideoPlayerIPTV';
+import { ExternalAdBanner } from '../components/ExternalAdBanner';
+import { AdsManager } from '../components/AdsManager';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function Iptv() {
+  const { user } = useAuth();
   const [channels, setChannels] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedChannel, setSelectedChannel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAds, setShowAds] = useState(false);
+  const [ads, setAds] = useState([]);
+  const [adsCount, setAdsCount] = useState(5);
 
   useEffect(() => {
     loadPlaylist();
   }, []);
+
+  useEffect(() => {
+    loadAdsSettings();
+  }, [user]);
+
+  const loadAdsSettings = async () => {
+    try {
+      const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+      const adsEnabled = adsSettings.enabled !== false;
+      const countNormal = adsSettings.countNormal || 5;
+
+      const adsData = await api.getAds();
+      const activeAds = adsData.filter(ad => ad.active);
+      setAds(activeAds.length > 0 ? activeAds : []);
+
+      const userIsPremium = user?.premium === true || user?.role === 'admin';
+      
+      if (!adsEnabled || userIsPremium) {
+        setAdsCount(0);
+      } else {
+        setAdsCount(countNormal);
+      }
+    } catch (err) {
+      console.error('Erreur chargement pubs:', err);
+      setAds([]);
+    }
+  };
 
   const loadPlaylist = async () => {
     try {
@@ -75,7 +110,16 @@ export default function Iptv() {
     : filterChannels(groups[selectedCategory] || [], searchTerm);
 
   const handleChannelClick = (channel) => {
-    setSelectedChannel(channel);
+    if (adsCount > 0 && ads.length > 0) {
+      setShowAds(true);
+      setSelectedChannel(channel);
+    } else {
+      setSelectedChannel(channel);
+    }
+  };
+
+  const handleAdsFinish = () => {
+    setShowAds(false);
   };
 
   if (isLoading) {
@@ -89,6 +133,8 @@ export default function Iptv() {
 
   return (
     <div className="container">
+      <ExternalAdBanner position="top" />
+      
       <h2>IPTV Live - {channels.length} chaînes</h2>
       
       {selectedChannel && (
@@ -157,7 +203,14 @@ export default function Iptv() {
               </button>
             </div>
             
-            {selectedChannel.url.includes('youtube.com') || selectedChannel.url.includes('youtu.be') ? (
+            {showAds ? (
+              <AdsManager 
+                adsCount={adsCount}
+                ads={ads}
+                onFinish={handleAdsFinish}
+                userId={user?.id}
+              />
+            ) : selectedChannel.url.includes('youtube.com') || selectedChannel.url.includes('youtu.be') ? (
               <div style={{background: 'rgba(250, 204, 21, 0.1)', border: '1px solid #facc15', padding: '30px', borderRadius: '16px', textAlign: 'center'}}>
                 <p style={{color: '#facc15', marginBottom: '20px', fontSize: '18px', fontWeight: '600'}}>🎥 Chaîne YouTube</p>
                 <a 

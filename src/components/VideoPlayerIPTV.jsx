@@ -42,59 +42,57 @@ export default function VideoPlayerIPTV({ src, title }) {
           levelLoadingMaxRetry: 4,
           fragLoadingTimeOut: 20000,
           fragLoadingMaxRetry: 6,
-          startLevel: isPremium ? -1 : 0, // -1 = auto, 0 = plus basse qualité pour non-premium
-          capLevelToPlayerSize: !isPremium, // Limiter selon la taille du player si non-premium
+          startLevel: -1, // Mode auto pour tous
+          capLevelToPlayerSize: false, // Désactiver la limitation de qualité basée sur la taille du player
         });
         
         hls.loadSource(src);
         hls.attachMedia(video);
         
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log('HLS Levels disponibles:', hls.levels);
-          console.log('Utilisateur Premium:', isPremium);
-          
-          // Récupérer les qualités disponibles
-          const qualities = hls.levels.map((level, index) => ({
-            index,
-            height: level.height,
-            width: level.width,
-            bitrate: level.bitrate,
-            label: `${level.height}p`
-          }));
-          
-          console.log('Qualités trouvées:', qualities);
-          
-          // Premium : toutes les qualités disponibles
-          // Gratuit : max 360p
-          const filteredQualities = isPremium 
-            ? qualities 
-            : qualities.filter(q => q.height <= 360);
-          
-          console.log('Qualités filtrées:', filteredQualities);
-          
-          setAvailableQualities([
-            { index: -1, label: isPremium ? 'Auto (Premium)' : 'Auto', height: 0 },
-            ...filteredQualities.reverse()
-          ]);
-          
-          hlsRef.current = hls;
-          
-          // Mode Auto par défaut pour tous - qualité maximale
-          hls.currentLevel = -1;
-          setQuality('Auto');
-          setCurrentQualityLevel(-1);
-          
-          // Qualité maximale pour tous les utilisateurs (premium ou non)
-          // Pas de limitation de qualité
-          
-          setIsLoading(false);
-          video.play()
-            .then(() => setIsPlaying(true))
-            .catch(err => {
-              console.log('Autoplay prevented:', err);
-              setIsLoading(false);
-            });
-        });
+        // Remplacer la section MANIFEST_PARSED
+hls.on(Hls.Events.MANIFEST_PARSED, () => {
+  console.log('HLS Levels disponibles:', hls.levels);
+  console.log('Utilisateur Premium:', isPremium);
+  
+  // Récupérer les qualités disponibles
+  const qualities = hls.levels.map((level, index) => ({
+    index,
+    height: level.height,
+    width: level.width,
+    bitrate: level.bitrate,
+    label: `${level.height}p`
+  }));
+  // Trier par qualité décroissante
+  qualities.sort((a, b) => b.height - a.height);
+  
+  // Pour les non-premium, filtrer à 360p max
+  const filteredQualities = isPremium 
+    ? qualities 
+    : qualities.filter(q => q.height <= 360);
+  // Si aucune qualité après filtrage, prendre la plus basse disponible
+  if (filteredQualities.length === 0 && qualities.length > 0) {
+    filteredQualities.push(qualities[qualities.length - 1]);
+  }
+  setAvailableQualities([
+    { index: -1, label: 'Auto', height: 0 },
+    ...filteredQualities
+  ]);
+  hlsRef.current = hls;
+  
+  // Définir la qualité maximale autorisée
+  if (filteredQualities.length > 0) {
+    const maxQuality = filteredQualities[0];
+    hls.currentLevel = maxQuality.index;
+    setQuality(`${maxQuality.height}p`);
+    setCurrentQualityLevel(maxQuality.index);
+    console.log(`Qualité définie sur: ${maxQuality.height}p`);
+  }
+  // Forcer la lecture
+  video.play().catch(err => {
+    console.log('Erreur de lecture automatique, tentative de lecture avec interaction utilisateur');
+  });
+  setIsLoading(false);
+});
 
         hls.on(Hls.Events.ERROR, (event, data) => {
           console.error('HLS Error:', data);
@@ -162,24 +160,29 @@ export default function VideoPlayerIPTV({ src, title }) {
     };
   }, [src]);
 
-  const handleQualityChange = (qualityIndex) => {
-    const hls = hlsRef.current;
-    if (!hls) return;
+const handleQualityChange = (qualityIndex) => {
+  const hls = hlsRef.current;
+  if (!hls) return;
 
-    if (qualityIndex === -1) {
-      // Mode auto
-      hls.currentLevel = -1;
-      setQuality('Auto');
-    } else {
-      // Qualité spécifique
-      hls.currentLevel = qualityIndex;
-      hls.loadLevel = qualityIndex;
-      setQuality(`${hls.levels[qualityIndex].height}p`);
-    }
-    
-    setCurrentQualityLevel(qualityIndex);
-    setShowQualityMenu(false);
-  };
+  // Vérifier si la qualité demandée est autorisée
+  const targetQuality = availableQualities.find(q => q.index === qualityIndex);
+  if (!targetQuality) {
+    console.log('Qualité non autorisée');
+    return;
+  }
+
+  if (qualityIndex === -1) {
+    hls.currentLevel = -1;
+    setQuality('Auto');
+  } else {
+    hls.currentLevel = qualityIndex;
+    hls.loadLevel = qualityIndex;
+    setQuality(`${targetQuality.height}p`);
+  }
+  
+  setCurrentQualityLevel(qualityIndex);
+  setShowQualityMenu(false);
+};
 
   return (
     <div style={{position: 'relative', width: '100%', background: '#000', borderRadius: '12px', overflow: 'hidden'}}>

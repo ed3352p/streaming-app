@@ -2,54 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Megaphone, Plus, Edit, Trash2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
-const defaultAds = [
-  {
-    id: 1,
-    title: 'Lumixar Premium',
-    description: 'Profitez de Lumixar sans publicités !',
-    imageUrl: 'https://via.placeholder.com/728x90/2563eb/ffffff?text=Lumixar+Premium+-+Sans+Pubs',
-    link: '/subscribe',
-    duration: 5,
-    active: true
-  },
-  {
-    id: 2,
-    title: 'Nouveaux Films',
-    description: 'Découvrez les dernières sorties',
-    imageUrl: 'https://via.placeholder.com/728x90/ef4444/ffffff?text=Nouveaux+Films+Chaque+Semaine',
-    link: '/films',
-    duration: 5,
-    active: true
-  },
-  {
-    id: 3,
-    title: 'IPTV Live',
-    description: 'Regardez la TV en direct',
-    imageUrl: 'https://via.placeholder.com/728x90/22c55e/ffffff?text=IPTV+Live+-+TV+en+Direct',
-    link: '/iptv',
-    duration: 5,
-    active: true
-  },
-  {
-    id: 4,
-    title: 'Séries Exclusives',
-    description: 'Les meilleures séries en streaming',
-    imageUrl: 'https://via.placeholder.com/728x90/a855f7/ffffff?text=Series+Exclusives+en+Streaming',
-    link: '/series',
-    duration: 5,
-    active: true
-  },
-  {
-    id: 5,
-    title: 'Abonnez-vous',
-    description: 'Créez votre compte gratuitement',
-    imageUrl: 'https://via.placeholder.com/728x90/f59e0b/ffffff?text=Creez+Votre+Compte+Gratuit',
-    link: '/login',
-    duration: 5,
-    active: true
-  }
-];
+import api from '../../services/api';
 
 export default function ManageAds() {
   const { user, logout } = useAuth();
@@ -61,9 +14,6 @@ export default function ManageAds() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    imageUrl: '',
     link: '',
     duration: 5
   });
@@ -91,14 +41,10 @@ export default function ManageAds() {
   const loadAds = async () => {
     try {
       const adsData = await api.getAds();
-      if (adsData.length > 0) {
-        setAds(adsData);
-      } else {
-        setAds(defaultAds);
-      }
+      setAds(adsData || []);
     } catch (err) {
       console.error('Error loading ads:', err);
-      setAds(defaultAds);
+      setAds([]);
     }
   };
 
@@ -129,9 +75,6 @@ export default function ManageAds() {
   const handleEdit = (ad) => {
     setEditingAd(ad);
     setFormData({
-      title: ad.title,
-      description: ad.description,
-      imageUrl: ad.imageUrl,
       link: ad.link,
       duration: ad.duration
     });
@@ -300,7 +243,7 @@ export default function ManageAds() {
 
         <div style={{marginBottom: '20px', display: 'flex', justifyContent: 'flex-end'}}>
           <button 
-            onClick={() => { setShowAddForm(true); setEditingAd(null); setFormData({ title: '', description: '', imageUrl: '', link: '', duration: 5 }); }}
+            onClick={() => { setShowAddForm(true); setEditingAd(null); setFormData({ link: '', duration: 5 }); }}
             className="btn"
             style={{display: 'flex', alignItems: 'center', gap: '8px'}}
           >
@@ -320,39 +263,13 @@ export default function ManageAds() {
             <form onSubmit={handleSubmit}>
               <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
                 <div>
-                  <label style={{display: 'block', marginBottom: '5px', color: '#94a3b8'}}>Titre</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    required
-                    style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white'}}
-                  />
-                </div>
-                <div>
                   <label style={{display: 'block', marginBottom: '5px', color: '#94a3b8'}}>Lien (URL)</label>
                   <input
                     type="text"
                     value={formData.link}
                     onChange={(e) => setFormData({...formData, link: e.target.value})}
-                    style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white'}}
-                  />
-                </div>
-                <div style={{gridColumn: 'span 2'}}>
-                  <label style={{display: 'block', marginBottom: '5px', color: '#94a3b8'}}>Description</label>
-                  <input
-                    type="text"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white'}}
-                  />
-                </div>
-                <div style={{gridColumn: 'span 2'}}>
-                  <label style={{display: 'block', marginBottom: '5px', color: '#94a3b8'}}>URL Image (728x90 recommandé)</label>
-                  <input
-                    type="text"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
+                    required
+                    placeholder="https://example.com"
                     style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #334155', background: '#1e293b', color: 'white'}}
                   />
                 </div>
@@ -385,8 +302,7 @@ export default function ManageAds() {
           <table style={{width: '100%', borderCollapse: 'collapse'}}>
             <thead>
               <tr style={{background: 'rgba(255,255,255,0.05)'}}>
-                <th style={{padding: '15px', textAlign: 'left', color: '#94a3b8'}}>Aperçu</th>
-                <th style={{padding: '15px', textAlign: 'left', color: '#94a3b8'}}>Titre</th>
+                <th style={{padding: '15px', textAlign: 'left', color: '#94a3b8'}}>Lien</th>
                 <th style={{padding: '15px', textAlign: 'left', color: '#94a3b8'}}>Durée</th>
                 <th style={{padding: '15px', textAlign: 'left', color: '#94a3b8'}}>Statut</th>
                 <th style={{padding: '15px', textAlign: 'right', color: '#94a3b8'}}>Actions</th>
@@ -396,16 +312,7 @@ export default function ManageAds() {
               {ads.map(ad => (
                 <tr key={ad.id} style={{borderTop: '1px solid rgba(255,255,255,0.05)'}}>
                   <td style={{padding: '15px'}}>
-                    <img 
-                      src={ad.imageUrl} 
-                      alt={ad.title}
-                      style={{width: '120px', height: '40px', objectFit: 'cover', borderRadius: '4px', background: '#334155'}}
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  </td>
-                  <td style={{padding: '15px'}}>
-                    <div style={{fontWeight: '600'}}>{ad.title}</div>
-                    <div style={{fontSize: '12px', color: '#64748b'}}>{ad.description}</div>
+                    <div style={{fontWeight: '600', color: '#3b82f6', wordBreak: 'break-all'}}>{ad.link}</div>
                   </td>
                   <td style={{padding: '15px', color: '#94a3b8'}}>{ad.duration}s</td>
                   <td style={{padding: '15px'}}>

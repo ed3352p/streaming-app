@@ -1,8 +1,11 @@
 import { Tv } from 'lucide-react';
+import { ExternalAdBanner } from '../components/ExternalAdBanner';
 
 export default function Series() {
   return (
     <div className="container">
+      <ExternalAdBanner position="top" />
+      
       <div style={{
         textAlign: 'center',
         padding: '100px 20px',

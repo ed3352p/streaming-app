@@ -62,5 +62,21 @@
     "createdAt": "2025-12-24T05:36:48.510Z",
     "confirmedAt": null,
     "txHash": null
+  },
+  {
+    "id": "pay_1766986468894_710bdf86437619aa",
+    "userId": 1,
+    "planId": "quarterly",
+    "plan": "Premium Trimestriel",
+    "amountUSD": 15,
+    "amountBTC": "0.00016672",
+    "discount": 0,
+    "promoCode": null,
+    "btcAddress": "bc1pnlzrveaul6gpw9hxhm58zx20yr9p4elqdnp5smvgjldl65cwkwtqvppdqk",
+    "status": "pending",
+    "expiresAt": "2025-12-29T06:04:28.894Z",
+    "createdAt": "2025-12-29T05:34:28.894Z",
+    "confirmedAt": null,
+    "txHash": null
   }
 ]

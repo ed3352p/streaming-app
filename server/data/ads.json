@@ -1,1 +1,122 @@
-[]
+[
+  {
+    "id": 1766983880771,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 23,
+    "clicks": 3,
+    "revenue": 1.5574999999999988,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T04:51:20.771Z"
+  },
+  {
+    "id": 1766983885158,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 2,
+    "clicks": 2,
+    "revenue": 1.005,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T04:51:25.158Z"
+  },
+  {
+    "id": 1766983887269,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 2,
+    "clicks": 2,
+    "revenue": 1.005,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T04:51:27.269Z"
+  },
+  {
+    "id": 1766983889623,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 2,
+    "clicks": 2,
+    "revenue": 1.005,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T04:51:29.623Z"
+  },
+  {
+    "id": 1766985115767,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 1,
+    "clicks": 1,
+    "revenue": 0.5025,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T05:11:55.767Z"
+  },
+  {
+    "id": 1766985118042,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 1,
+    "clicks": 1,
+    "revenue": 0.5025,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T05:11:58.042Z"
+  },
+  {
+    "id": 1766985120021,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 1,
+    "clicks": 1,
+    "revenue": 0.5025,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T05:12:00.021Z"
+  },
+  {
+    "id": 1766985123711,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 1,
+    "clicks": 1,
+    "revenue": 0.5025,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T05:12:03.711Z"
+  },
+  {
+    "id": 1766985126124,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 1,
+    "clicks": 1,
+    "revenue": 0.5025,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T05:12:06.124Z"
+  },
+  {
+    "id": 1766985136014,
+    "link": "https://www.effectivegatecpm.com/udfe7k6y4d?key=924b7764b9562f6629bd596ee50118fa",
+    "duration": 5,
+    "impressions": 1,
+    "clicks": 1,
+    "revenue": 0.5025,
+    "cpm": 2.5,
+    "cpc": 0.5,
+    "active": true,
+    "createdAt": "2025-12-29T05:12:16.014Z"
+  }
+]
