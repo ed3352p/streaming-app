@@ -1,10 +1,10 @@
-# Redirects for Netlify
+# Redirects for Netlify/Vercel
 # Force HTTPS
-http://lumixar.com/* https://lumixar.com/:splat 301!
-http://www.lumixar.com/* https://lumixar.com/:splat 301!
+http://lumixar.online/* https://lumixar.online/:splat 301!
+http://www.lumixar.online/* https://lumixar.online/:splat 301!
 
 # Redirect www to non-www
-https://www.lumixar.com/* https://lumixar.com/:splat 301!
+https://www.lumixar.online/* https://lumixar.online/:splat 301!
 
 # SPA fallback - must be last
 /*    /index.html   200

@@ -1,3 +1,13 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build outputs
+dist
+dist-ssr
+build
+*.local
+
 # Logs
 logs
 *.log
@@ -7,10 +17,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Environment variables
+.env
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +32,39 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Server data (development only)
+server/data/*.json
+server/uploads/*
+server/logs/*
+!server/data/.gitkeep
+!server/uploads/.gitkeep
+!server/logs/.gitkeep
+
+# Temporary files
+*.tmp
+*.temp
+*.m3u8
+*.ts
+playlist*.m3u8
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Test files
+coverage
+.nyc_output
+
+# Cache
+.cache
+.parcel-cache
+.eslintcache
