@@ -37,7 +37,7 @@ fi
 # Variables
 GIT_REPO="https://github.com/ed3352p/streaming-app.git"
 GIT_BRANCH="main"
-DOMAIN=""
+DOMAIN="lumixar.online"
 EMAIL=""
 APP_DIR="/var/www/lumixar"
 TEMP_DIR="/tmp/lumixar-install-$$"
@@ -155,20 +155,47 @@ if [ "$INSTALL_MODE" = "git" ]; then
     fi
     
     # Clone dans un répertoire temporaire
-    print_info "Clone depuis $GIT_REPO..."
-    if ! git clone --depth 1 --branch "$GIT_BRANCH" "$GIT_REPO" "$TEMP_DIR" 2>&1 | grep -v "Cloning"; then
-        print_error "Échec du clone Git. Vérifiez l'URL et votre connexion internet."
+    print_info "Clone depuis $GIT_REPO (branche: $GIT_BRANCH)..."
+    
+    # Vérifier la connectivité internet
+    if ! ping -c 1 github.com &> /dev/null; then
+        print_error "Impossible de contacter GitHub. Vérifiez votre connexion internet."
     fi
     
-    # Vérifier que le clone a réussi
-    if [ ! -d "$TEMP_DIR" ] || [ ! -f "$TEMP_DIR/package.json" ]; then
-        print_error "Le clone Git a échoué ou le repository est invalide"
+    # Supprimer le répertoire temporaire s'il existe déjà
+    rm -rf "$TEMP_DIR"
+    
+    # Cloner le repository avec affichage des erreurs
+    print_info "Téléchargement en cours..."
+    if git clone --depth 1 --branch "$GIT_BRANCH" "$GIT_REPO" "$TEMP_DIR" 2>&1; then
+        print_success "Clone Git réussi"
+    else
+        echo ""
+        print_error "Échec du clone Git. Causes possibles:
+  - Le repository n'existe pas ou est privé
+  - La branche '$GIT_BRANCH' n'existe pas
+  - Problème de connexion internet
+  - URL incorrecte: $GIT_REPO
+  
+Vérifiez que le repository est public et accessible."
+    fi
+    
+    # Vérifier que le clone a réussi et contient les fichiers nécessaires
+    if [ ! -d "$TEMP_DIR" ]; then
+        print_error "Le répertoire temporaire n'a pas été créé"
+    fi
+    
+    if [ ! -f "$TEMP_DIR/package.json" ]; then
+        print_error "Le repository est invalide (package.json manquant). Vérifiez que le repository GitHub est correct."
     fi
     
     # Copier les fichiers vers le répertoire final
     print_info "Copie des fichiers vers $APP_DIR..."
+    
+    # Copier tous les fichiers (y compris les fichiers cachés)
+    shopt -s dotglob
     cp -r "$TEMP_DIR"/* "$APP_DIR/" 2>/dev/null || true
-    cp -r "$TEMP_DIR"/.* "$APP_DIR/" 2>/dev/null || true
+    shopt -u dotglob
     
     # Nettoyer le répertoire temporaire
     rm -rf "$TEMP_DIR"
@@ -200,10 +227,10 @@ print_step "Configuration de l'environnement"
 JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
 
 if [ "$DOMAIN" = "localhost" ]; then
-    API_URL="http://localhost:3001/api"
+    API_URL="http://localhost:3001"
     CORS_ORIGIN="http://localhost:5173,http://localhost:8080,http://localhost:3001"
 else
-    API_URL="https://$DOMAIN/api"
+    API_URL=""
     CORS_ORIGIN="https://$DOMAIN,https://www.$DOMAIN,http://$DOMAIN"
 fi
 
@@ -315,19 +342,23 @@ module.exports = {
   apps: [{
     name: 'lumixar-backend',
     script: './server/index.js',
-    instances: 'max',
-    exec_mode: 'cluster',
+    instances: 1,
+    exec_mode: 'fork',
     env: {
       NODE_ENV: 'production',
       PORT: 3001
     },
-    error_file: './logs/backend-err.log',
-    out_file: './logs/backend-out.log',
-    log_file: './logs/backend-combined.log',
-    time: true,
-    max_memory_restart: '500M',
+    error_file: './logs/pm2-error.log',
+    out_file: './logs/pm2-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss',
+    merge_logs: true,
     autorestart: true,
-    watch: false
+    watch: false,
+    max_memory_restart: '500M',
+    env_production: {
+      NODE_ENV: 'production',
+      PORT: 3001
+    }
   }]
 };
 EOF
