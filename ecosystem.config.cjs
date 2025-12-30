@@ -1,4 +1,22 @@
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+
+// Load .env file manually
+const envPath = path.join(__dirname, '.env');
+const envVars = {};
+
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    line = line.trim();
+    if (line && !line.startsWith('#')) {
+      const [key, ...valueParts] = line.split('=');
+      if (key) {
+        envVars[key.trim()] = valueParts.join('=').trim();
+      }
+    }
+  });
+}
 
 module.exports = {
   apps: [{
@@ -9,7 +27,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3001,
-      JWT_SECRET: process.env.JWT_SECRET
+      JWT_SECRET: envVars.JWT_SECRET
     },
     error_file: './logs/pm2-error.log',
     out_file: './logs/pm2-out.log',
@@ -21,7 +39,7 @@ module.exports = {
     env_production: {
       NODE_ENV: 'production',
       PORT: 3001,
-      JWT_SECRET: process.env.JWT_SECRET
+      JWT_SECRET: envVars.JWT_SECRET
     }
   }]
 };
