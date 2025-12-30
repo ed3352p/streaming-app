@@ -200,7 +200,7 @@ app.use(helmet({
 
 // CORS with strict origin control
 app.use(cors({
-  origin: ['https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080'],
+  origin: ['https://lumixar.online', 'http://lumixar.online', 'https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
