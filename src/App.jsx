@@ -18,6 +18,7 @@ const Movie = lazy(() => import("./pages/Movie"));
 const Player = lazy(() => import("./pages/Player"));
 const Iptv = lazy(() => import("./pages/Iptv"));
 const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
 const Subscribe = lazy(() => import("./pages/Subscribe"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AddMovie = lazy(() => import("./pages/admin/AddMovie"));
@@ -85,12 +86,13 @@ export default function App() {
               <Route path="/series" element={<Series />} />
               <Route path="/movie/:id" element={<Movie />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/subscribe" element={<Subscribe />} />
               <Route path="/search" element={<Search />} />
               <Route path="/watchlist" element={<Watchlist />} />
               <Route path="/payment/:paymentId" element={<Payment />} />
               <Route path="/payment/success" element={<PaymentSuccess />} />
-              <Route path="/redeem-code" element={<RedeemCode />} />
+              <Route path="/redeem-code" element={<ProtectedRoute><RedeemCode /></ProtectedRoute>} />
 
               {/* Player route */}
               <Route path="/player/:id" element={<Player />} />

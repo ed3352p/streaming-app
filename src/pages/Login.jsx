@@ -198,24 +198,11 @@ export default function Login() {
         
         <p style={{ textAlign: 'center', color: '#64748b', fontSize: '14px', marginTop: '24px' }}>
           Pas encore de compte ?{' '}
-          <Link to="/subscribe" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}>
-            S'inscrire
+          <Link to="/register" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}>
+            Créer un compte
           </Link>
         </p>
 
-        <div style={{ 
-          marginTop: '24px', 
-          padding: '16px', 
-          background: 'rgba(37, 99, 235, 0.1)', 
-          borderRadius: '10px',
-          border: '1px solid rgba(37, 99, 235, 0.2)'
-        }}>
-          <p style={{ color: '#60a5fa', fontSize: '13px', margin: 0, textAlign: 'center' }}>
-            <strong>Comptes de test :</strong><br />
-            Admin: admin@streambox.com / Admin123!<br />
-            User: test@streambox.com / Test1234!
-          </p>
-        </div>
       </form>
     </div>
   );

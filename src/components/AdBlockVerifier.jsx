@@ -3,11 +3,31 @@ import { useEffect, useState } from 'react';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function AdBlockVerifier({ onVerified, onBlocked }) {
-  const [status, setStatus] = useState('checking'); // Toujours vérifier à chaque chargement
+  const [status, setStatus] = useState('checking');
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 0; // Aucune tentative - blocage immédiat
+  const maxRetries = 0;
 
   useEffect(() => {
+    // Vérifier si l'utilisateur a déjà été vérifié dans cette session
+    const cachedVerification = sessionStorage.getItem('adblock_verified');
+    const verificationTime = sessionStorage.getItem('adblock_verified_time');
+    
+    // Cache valide pendant 30 minutes
+    const cacheValidDuration = 30 * 60 * 1000;
+    const now = Date.now();
+    
+    if (cachedVerification === 'true' && verificationTime) {
+      const timeSinceVerification = now - parseInt(verificationTime);
+      
+      if (timeSinceVerification < cacheValidDuration) {
+        // Utilisateur déjà vérifié récemment, pas besoin de re-vérifier
+        setStatus('verified');
+        if (onVerified) onVerified();
+        return;
+      }
+    }
+    
+    // Sinon, effectuer la vérification
     initializeAdBlock();
   }, []);
 
@@ -18,11 +38,19 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
       
       if (!isBlocked) {
         setStatus('verified');
+        // Sauvegarder la vérification dans le cache
+        sessionStorage.setItem('adblock_verified', 'true');
+        sessionStorage.setItem('adblock_verified_time', Date.now().toString());
         if (onVerified) onVerified();
       } else {
+        // Supprimer le cache si bloqué
+        sessionStorage.removeItem('adblock_verified');
+        sessionStorage.removeItem('adblock_verified_time');
         handleBlocked();
       }
     } catch (error) {
+      sessionStorage.removeItem('adblock_verified');
+      sessionStorage.removeItem('adblock_verified_time');
       handleBlocked();
     }
   };
@@ -362,7 +390,9 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
   };
 
   const handleRetry = () => {
-    // Réessayer la détection
+    // Supprimer le cache et réessayer la détection
+    sessionStorage.removeItem('adblock_verified');
+    sessionStorage.removeItem('adblock_verified_time');
     setRetryCount(0);
     setStatus('checking');
     initializeAdBlock();
