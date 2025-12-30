@@ -72,11 +72,14 @@ export default function App() {
   const [adBlockVerified, setAdBlockVerified] = useState(false);
 
   useEffect(() => {
-    // Register service worker for PWA
+    // Unregister all service workers
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => console.log('SW registered:', registration))
-        .catch(error => console.log('SW registration failed:', error));
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        registrations.forEach(registration => {
+          registration.unregister();
+          console.log('SW unregistered');
+        });
+      });
     }
   }, []);
 
