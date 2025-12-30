@@ -4,6 +4,7 @@ import MovieCard from "../components/MovieCard";
 import api from '../services/api';
 import { ExternalAdBanner } from '../components/ExternalAdBanner';
 import { NativeBanner } from '../components/NativeBanner';
+import { LeaderboardBanner } from '../components/LeaderboardBanner';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
@@ -190,8 +191,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Bannière publicitaire entre hero et contenu */}
-      <ExternalAdBanner position="top" isHomePage={true} />
+      {/* Publicités désactivées sur la page Home - uniquement avant films et IPTV */}
 
       <style>{`
         @keyframes float {
@@ -404,8 +404,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Native Banner publicitaire */}
-        <NativeBanner position="in-feed" isHomePage={true} />
+        {/* Native Banner désactivé - publicités uniquement avant films et IPTV */}
 
         {/* Section Premium */}
         <div className="premium-section" style={{

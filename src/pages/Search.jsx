@@ -95,8 +95,6 @@ export default function Search() {
 
   return (
     <div className="container" style={{paddingTop: '30px'}}>
-      <ExternalAdBanner position="top" />
-      
       <h1 style={{marginBottom: '30px'}}>Recherche</h1>
 
       <form onSubmit={handleSearch} style={{marginBottom: '30px'}}>

@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "adblock-detector": "^2.1.0",
+    "fuckadblock": "^3.2.1",
     "hls.js": "^1.6.15",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",

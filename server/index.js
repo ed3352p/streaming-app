@@ -61,6 +61,13 @@ import {
   deleteUsedCodes,
   exportCodesCSV
 } from './utils/accessCodes.js';
+import {
+  generateAdToken,
+  verifyAdLoaded,
+  requireAdToken,
+  requireAdTokenOrPremium,
+  getAdblockStats
+} from './middleware/adblockDetection.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1122,6 +1129,17 @@ app.get('/api/analytics/realtime', authenticateToken, requireAdmin, (req, res) =
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
+
+// ============ ADBLOCK DETECTION ROUTES ============
+
+// Generate ad verification token
+app.get('/api/adblock/token', generateAdToken);
+
+// Verify ad was loaded
+app.post('/api/adblock/verify', verifyAdLoaded);
+
+// Get adblock detection stats (Admin only)
+app.get('/api/adblock/stats', authenticateToken, requireAdmin, getAdblockStats);
 
 // ============ USERS ROUTES (Admin) ============
 

@@ -75,8 +75,6 @@ export default function Watchlist() {
 
   return (
     <div className="container" style={{paddingTop: '30px'}}>
-      <ExternalAdBanner position="top" />
-      
       <h1 style={{marginBottom: '30px'}}>Ma Collection</h1>
 
       <div style={{

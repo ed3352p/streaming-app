@@ -14,7 +14,14 @@ ssh root@VOTRE_IP_SERVEUR
 
 ### 2. Télécharger et exécuter le script
 ```bash
-wget https://raw.githubusercontent.com/ed3352p/streaming-app/main/deploy-ubuntu.sh
+# Option A: Wget direct
+wget https://raw.githubusercontent.com/ed3352p/streaming-app/refs/heads/main/deploy-ubuntu.sh
+chmod +x deploy-ubuntu.sh
+sudo bash deploy-ubuntu.sh
+
+# Option B: Clone puis exécute (recommandé)
+git clone https://github.com/ed3352p/streaming-app.git
+cd streaming-app
 chmod +x deploy-ubuntu.sh
 sudo bash deploy-ubuntu.sh
 ```

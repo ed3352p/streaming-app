@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
-// Variable globale pour s'assurer que le script n'est chargé qu'une seule fois
+// Variable globale pour charger le script une seule fois
 let popunderScriptLoaded = false;
 
 export function PopunderAd() {
@@ -19,19 +19,8 @@ export function PopunderAd() {
   }
 
   useEffect(() => {
-    // Charger le script Popunder une seule fois globalement
-    if (!popunderScriptLoaded) {
-      const script = document.createElement('script');
-      script.src = 'https://pl28361193.effectivegatecpm.com/31/fb/42/31fb423b4c0815ba0b17d838c933a210.js';
-      script.type = 'text/javascript';
-      
-      // Charger dans le head pour une meilleure compatibilité
-      document.head.appendChild(script);
-      popunderScriptLoaded = true;
-      
-      console.log('Popunder script loaded');
-    }
+    // PopunderAd désactivé - le script pl28361193 est maintenant utilisé par NativeBanner
   }, []);
 
-  return null; // Ce composant n'affiche rien visuellement
+  return null; // Composant invisible
 }

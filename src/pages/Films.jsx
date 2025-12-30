@@ -172,8 +172,6 @@ export default function Films() {
         }
       `}</style>
       
-      <ExternalAdBanner position="top" />
-      
       <div style={{marginBottom: '40px'}}>
         <h1 style={{
           fontSize: 'clamp(28px, 6vw, 48px)',
@@ -290,16 +288,7 @@ export default function Films() {
                     year={movie.year}
                     description={movie.description}
                   />
-                  {/* Native Banner après 24 films */}
-                  {shouldShowAd && (
-                    <div style={{
-                      gridColumn: '1 / -1',
-                      margin: '48px 0',
-                      animation: 'fadeInScale 0.6s ease-out'
-                    }}>
-                      <NativeBanner key={`ad-page-${currentPage}`} position="in-feed" />
-                    </div>
-                  )}
+                  {/* Native Banner désactivé - publicités uniquement avant films et IPTV */}
                 </Fragment>
               );
             })}

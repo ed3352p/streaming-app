@@ -1118,6 +1118,40 @@
       "lat": 0,
       "lon": 0,
       "timestamp": "2025-12-30T00:01:42.130Z"
+    },
+    {
+      "contentId": 1766561683908,
+      "contentType": "movie",
+      "title": "Five Nights at Freddy's 2",
+      "genre": "Action",
+      "watchTime": 0,
+      "progress": 0,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:09.724Z"
+    },
+    {
+      "contentId": 1766561689652,
+      "contentType": "movie",
+      "title": "Évanouis",
+      "genre": "Action",
+      "watchTime": 0,
+      "progress": 0,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:49:07.943Z"
     }
   ],
   "adImpressions": [
@@ -2082,6 +2116,136 @@
       "lat": 0,
       "lon": 0,
       "timestamp": "2025-12-30T00:51:04.225Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:09.723Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:09.742Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:09.743Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:10.996Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:40.846Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:48:40.849Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:49:07.942Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:49:07.968Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:49:07.971Z"
+    },
+    {
+      "adId": 1766983880771,
+      "userId": null,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T04:49:09.259Z"
     }
   ],
   "adClicks": [
@@ -2348,8 +2512,8 @@
   ],
   "sessions": [
     {
-      "sessionId": "session_1767050141058_iu5boasz4",
-      "contentId": 1766561685201,
+      "sessionId": "session_1767070089426_fgi00czfq",
+      "contentId": 1766561683908,
       "contentType": "movie",
       "ip": "::1",
       "country": "Local",
@@ -2359,12 +2523,12 @@
       "timezone": "UTC",
       "lat": 0,
       "lon": 0,
-      "startTime": "2025-12-29T23:15:41.386Z",
-      "lastActivity": "2025-12-29T23:15:41.386Z"
+      "startTime": "2025-12-30T04:48:09.740Z",
+      "lastActivity": "2025-12-30T04:48:09.740Z"
     },
     {
-      "sessionId": "session_1767052901827_vx6b04t5q",
-      "contentId": 1766561748494,
+      "sessionId": "session_1767070147645_ac3hylo5i",
+      "contentId": 1766561689652,
       "contentType": "movie",
       "ip": "::1",
       "country": "Local",
@@ -2374,8 +2538,8 @@
       "timezone": "UTC",
       "lat": 0,
       "lon": 0,
-      "startTime": "2025-12-30T00:01:42.145Z",
-      "lastActivity": "2025-12-30T00:01:42.145Z"
+      "startTime": "2025-12-30T04:49:07.964Z",
+      "lastActivity": "2025-12-30T04:49:07.964Z"
     }
   ],
   "bandwidth": []

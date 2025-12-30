@@ -135,8 +135,6 @@ export default function Iptv() {
 
   return (
     <div className="container">
-      <ExternalAdBanner position="top" />
-      
       <h2>IPTV Live - {channels.length} chaînes</h2>
       
       {selectedChannel && (
