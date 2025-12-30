@@ -21,42 +21,7 @@ export const ExternalAdBanner = memo(function ExternalAdBanner({ position = 'top
   }
 
   useEffect(() => {
-    if (scriptLoadedRef.current) return;
-
-    const container = adContainerRef.current;
-    if (!container) return;
-
-    // Attendre un peu pour éviter les conflits entre instances
-    const timer = setTimeout(() => {
-      const configScript = document.createElement('script');
-      configScript.innerHTML = `
-        atOptions = {
-          'key' : '08c30a991ac8b80ee3ad09f4d76ffe91',
-          'format' : 'iframe',
-          'height' : 90,
-          'width' : 728,
-          'params' : {}
-        };
-      `;
-
-      const invokeScript = document.createElement('script');
-      invokeScript.src = 'https://www.highperformanceformat.com/08c30a991ac8b80ee3ad09f4d76ffe91/invoke.js';
-      invokeScript.async = true;
-
-      container.appendChild(configScript);
-      container.appendChild(invokeScript);
-      scriptLoadedRef.current = true;
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      if (container) {
-        while (container.firstChild) {
-          container.removeChild(container.firstChild);
-        }
-      }
-      scriptLoadedRef.current = false;
-    };
+    // Scripts de publicité désactivés pour éviter les popups
   }, []);
 
   return (

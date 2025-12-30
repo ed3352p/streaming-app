@@ -129,6 +129,40 @@ export function requireAdTokenOrPremium(req, res, next) {
 }
 
 /**
+ * Vérifie si un token est toujours valide (pour le cache client)
+ */
+export function verifyTokenValidity(req, res) {
+  const { token } = req.body;
+  
+  if (!token) {
+    return res.status(400).json({ error: 'Token required', valid: false });
+  }
+  
+  const tokenData = validationTokens.get(token);
+  
+  if (!tokenData) {
+    return res.json({ valid: false, reason: 'Token not found or expired' });
+  }
+  
+  const now = Date.now();
+  if (now > tokenData.expiresAt) {
+    validationTokens.delete(token);
+    return res.json({ valid: false, reason: 'Token expired' });
+  }
+  
+  if (!tokenData.verified) {
+    return res.json({ valid: false, reason: 'Token not verified' });
+  }
+  
+  // Token valide et vérifié
+  res.json({ 
+    valid: true, 
+    expiresIn: tokenData.expiresAt - now,
+    verifiedAt: tokenData.verifiedAt 
+  });
+}
+
+/**
  * Statistiques sur les détections d'adblock
  */
 export function getAdblockStats(req, res) {
@@ -156,6 +190,7 @@ export function getAdblockStats(req, res) {
 export default {
   generateAdToken,
   verifyAdLoaded,
+  verifyTokenValidity,
   requireAdToken,
   requireAdTokenOrPremium,
   getAdblockStats

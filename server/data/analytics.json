@@ -1152,6 +1152,60 @@
       "lat": 0,
       "lon": 0,
       "timestamp": "2025-12-30T04:49:07.943Z"
+    },
+    {
+      "contentId": 1767126903765,
+      "contentType": "movie",
+      "title": "Wicked : Partie II",
+      "genre": "Action",
+      "userId": 1,
+      "watchTime": 0,
+      "progress": 0,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T20:35:12.604Z"
+    },
+    {
+      "contentId": 1767126903765,
+      "contentType": "movie",
+      "title": "Wicked : Partie II",
+      "genre": "Action",
+      "userId": 1,
+      "watchTime": 0,
+      "progress": 0,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T20:59:16.548Z"
+    },
+    {
+      "contentId": 1767126903765,
+      "contentType": "movie",
+      "title": "Wicked : Partie II",
+      "genre": "Action",
+      "userId": 1,
+      "watchTime": 0,
+      "progress": 0,
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "timestamp": "2025-12-30T21:09:13.274Z"
     }
   ],
   "adImpressions": [
@@ -2512,8 +2566,9 @@
   ],
   "sessions": [
     {
-      "sessionId": "session_1767070089426_fgi00czfq",
-      "contentId": 1766561683908,
+      "sessionId": "session_1767126912323_8d3m0jexl",
+      "userId": 1,
+      "contentId": 1767126903765,
       "contentType": "movie",
       "ip": "::1",
       "country": "Local",
@@ -2523,12 +2578,13 @@
       "timezone": "UTC",
       "lat": 0,
       "lon": 0,
-      "startTime": "2025-12-30T04:48:09.740Z",
-      "lastActivity": "2025-12-30T04:48:09.740Z"
+      "startTime": "2025-12-30T20:35:12.619Z",
+      "lastActivity": "2025-12-30T20:35:12.619Z"
     },
     {
-      "sessionId": "session_1767070147645_ac3hylo5i",
-      "contentId": 1766561689652,
+      "sessionId": "session_1767128356242_0iwwr37xu",
+      "userId": 1,
+      "contentId": 1767126903765,
       "contentType": "movie",
       "ip": "::1",
       "country": "Local",
@@ -2538,8 +2594,24 @@
       "timezone": "UTC",
       "lat": 0,
       "lon": 0,
-      "startTime": "2025-12-30T04:49:07.964Z",
-      "lastActivity": "2025-12-30T04:49:07.964Z"
+      "startTime": "2025-12-30T20:59:16.562Z",
+      "lastActivity": "2025-12-30T20:59:16.562Z"
+    },
+    {
+      "sessionId": "session_1767128952981_opqejkb4m",
+      "userId": 1,
+      "contentId": 1767126903765,
+      "contentType": "movie",
+      "ip": "::1",
+      "country": "Local",
+      "countryCode": "XX",
+      "region": "Local",
+      "city": "Local",
+      "timezone": "UTC",
+      "lat": 0,
+      "lon": 0,
+      "startTime": "2025-12-30T21:09:13.289Z",
+      "lastActivity": "2025-12-30T21:09:13.289Z"
     }
   ],
   "bandwidth": []

@@ -168,7 +168,7 @@ export default function Home() {
             {/* Colonne droite - Cartes flottantes */}
             <div className="hero-cards" style={{position: 'relative', height: '400px'}}>
               {[
-                {icon: Film, label: 'Films HD', count: movies.length || '1000+', color: '#3b82f6', top: '0%', left: '0%'},
+                {icon: Film, label: 'Films HD', count: '10k+', color: '#3b82f6', top: '0%', left: '0%'},
                 {icon: Tv, label: 'IPTV Live', count: '500+', color: '#8b5cf6', top: '20%', left: '40%'},
                 {icon: Users, label: 'Utilisateurs', count: '10K+', color: '#10b981', top: '50%', left: '10%'}
               ].map((item, i) => (

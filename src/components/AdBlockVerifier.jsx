@@ -11,25 +11,59 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
     // Vérifier si l'utilisateur a déjà été vérifié (localStorage persiste entre les sessions)
     const cachedVerification = localStorage.getItem('adblock_verified');
     const verificationTime = localStorage.getItem('adblock_verified_time');
+    const serverToken = localStorage.getItem('server_ad_token');
     
-    // Cache valide pendant 24 heures
-    const cacheValidDuration = 24 * 60 * 60 * 1000;
+    // Cache valide pendant 4 minutes (moins que le token serveur de 5 min pour sécurité)
+    const cacheValidDuration = 4 * 60 * 1000;
     const now = Date.now();
     
-    if (cachedVerification === 'true' && verificationTime) {
+    if (cachedVerification === 'true' && verificationTime && serverToken) {
       const timeSinceVerification = now - parseInt(verificationTime);
       
       if (timeSinceVerification < cacheValidDuration) {
-        // Utilisateur déjà vérifié récemment, pas besoin de re-vérifier
-        setStatus('verified');
-        if (onVerified) onVerified();
+        // Utilisateur déjà vérifié récemment ET token serveur présent
+        // Vérifier rapidement que le token est toujours valide
+        verifyServerToken(serverToken).then(isValid => {
+          if (isValid) {
+            setStatus('verified');
+            if (onVerified) onVerified();
+          } else {
+            // Token expiré, re-vérifier
+            localStorage.removeItem('adblock_verified');
+            localStorage.removeItem('adblock_verified_time');
+            localStorage.removeItem('server_ad_token');
+            initializeAdBlock();
+          }
+        }).catch(() => {
+          // Erreur de vérification, re-vérifier pour être sûr
+          initializeAdBlock();
+        });
         return;
       }
     }
     
-    // Sinon, effectuer la vérification
+    // Sinon, effectuer la vérification complète
     initializeAdBlock();
   }, []);
+
+  const verifyServerToken = async (token) => {
+    try {
+      // Vérifier que le token est toujours valide côté serveur
+      const response = await fetch(`${API_URL}/api/adblock/verify-token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        return result.valid === true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  };
 
   const initializeAdBlock = async () => {
     try {
@@ -38,14 +72,16 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
       
       if (!isBlocked) {
         setStatus('verified');
-        // Sauvegarder la vérification dans le cache
+        // Sauvegarder la vérification dans le cache (4 minutes)
         localStorage.setItem('adblock_verified', 'true');
         localStorage.setItem('adblock_verified_time', Date.now().toString());
         if (onVerified) onVerified();
       } else {
-        // Supprimer le cache si bloqué
+        // Supprimer tout le cache si bloqué
         localStorage.removeItem('adblock_verified');
         localStorage.removeItem('adblock_verified_time');
+        localStorage.removeItem('server_ad_token');
+        localStorage.removeItem('server_ad_token_time');
         handleBlocked();
       }
     } catch (error) {
@@ -63,13 +99,8 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
       let adsActuallyLoaded = 0;
       
       
-      // Test 0: Vérifier TOUS les scripts externes - DOIVENT se charger
-      const externalScripts = [
-        'https://pl28361165.effectivegatecpm.com/2968c5163418d816eb927da1c62e9d5a/invoke.js',
-        'https://www.highperformanceformat.com/08c30a991ac8b80ee3ad09f4d76ffe91/invoke.js',
-        'https://www.highperformanceformat.com/6c562e9ec8edf0006e2a7bae4b0af641/invoke.js',
-        'https://pl28361193.effectivegatecpm.com/31/fb/42/31fb423b4c0815ba0b17d838c933a210.js'
-      ];
+      // Test 0: Scripts de publicité désactivés pour éviter les popups
+      const externalScripts = [];
       
       let externalScriptsSuccess = 0;
       
@@ -157,8 +188,9 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
               const result = await verifyResponse.json();
               if (result.verified) {
                 adsActuallyLoaded += 5; // Compte beaucoup car vérifié serveur
-                // Sauvegarder le token pour les requêtes futures
+                // Sauvegarder le token ET le timestamp pour les requêtes futures
                 localStorage.setItem('server_ad_token', token);
+                localStorage.setItem('server_ad_token_time', Date.now().toString());
               } else {
                 blockedCount += 2;
               }
@@ -390,9 +422,11 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
   };
 
   const handleRetry = () => {
-    // Supprimer le cache et réessayer la détection
+    // Supprimer tout le cache et réessayer la détection
     localStorage.removeItem('adblock_verified');
     localStorage.removeItem('adblock_verified_time');
+    localStorage.removeItem('server_ad_token');
+    localStorage.removeItem('server_ad_token_time');
     setRetryCount(0);
     setStatus('checking');
     initializeAdBlock();

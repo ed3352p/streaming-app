@@ -12,11 +12,6 @@ export default function SiteAds() {
     const loadAdScripts = () => {
       const scripts = [
         {
-          id: 'ad-script-2',
-          src: 'https://publishoccur.com/31/fb/42/31fb423b4c0815ba0b17d838c933a210.js',
-          async: false
-        },
-        {
           id: 'ad-script-3',
           src: 'https://publishoccur.com/2968c5163418d816eb927da1c62e9d5a/invoke.js',
           async: true,
@@ -39,7 +34,7 @@ export default function SiteAds() {
     loadAdScripts();
 
     return () => {
-      const scriptIds = ['ad-script-2', 'ad-script-3'];
+      const scriptIds = ['ad-script-3'];
       scriptIds.forEach(id => {
         const script = document.getElementById(id);
         if (script) {

@@ -1,10 +1,10 @@
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 
-// Enhanced rate limiting for authentication - DISABLED
+// Enhanced rate limiting for authentication - ENABLED
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 999999, // DISABLED
+  max: 5, // Maximum 5 login attempts per 15 minutes
   message: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -18,10 +18,10 @@ export const authLimiter = rateLimit({
   }
 });
 
-// Strict rate limiting for registration - DISABLED
+// Strict rate limiting for registration - ENABLED
 export const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 999999, // DISABLED
+  max: 3, // Maximum 3 account creations per hour per IP
   message: 'Trop de créations de compte. Réessayez dans 1 heure.',
   skipSuccessfulRequests: false,
   handler: (req, res) => {
@@ -32,10 +32,10 @@ export const registerLimiter = rateLimit({
   }
 });
 
-// API rate limiting - DISABLED (set to very high limit)
+// API rate limiting - ENABLED
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 999999,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // 100 requests per 15 minutes per IP
   message: 'Trop de requêtes. Réessayez plus tard.',
   handler: (req, res) => {
     res.status(429).json({
@@ -45,10 +45,10 @@ export const apiLimiter = rateLimit({
   }
 });
 
-// Payment rate limiting (plus permissif) - DISABLED
+// Payment rate limiting - ENABLED
 export const paymentLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 999999, // DISABLED
+  max: 10, // 10 payment attempts per 15 minutes
   message: 'Trop de tentatives de paiement.',
   skipSuccessfulRequests: false,
   handler: (req, res) => {
@@ -59,10 +59,10 @@ export const paymentLimiter = rateLimit({
   }
 });
 
-// Upload rate limiting - DISABLED
+// Upload rate limiting - ENABLED
 export const uploadLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 999999, // DISABLED
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // 20 uploads per hour per IP
   message: 'Limite d\'uploads atteinte. Réessayez dans 1 heure.',
   handler: (req, res) => {
     res.status(429).json({

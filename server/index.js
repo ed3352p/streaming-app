@@ -64,13 +64,19 @@ import {
 import {
   generateAdToken,
   verifyAdLoaded,
+  verifyTokenValidity,
   requireAdToken,
   requireAdTokenOrPremium,
   getAdblockStats
 } from './middleware/adblockDetection.js';
+import { printValidationResults, getSecureConfig } from './utils/envValidator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Validate environment before starting server
+printValidationResults();
+const config = getSecureConfig();
 
 const app = express();
 app.set('trust proxy', 1);
@@ -191,16 +197,37 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "http://localhost:*", "https://min-stream.click"]
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      connectSrc: ["'self'", "http://localhost:*", "https://min-stream.click", "https://lumixar.online"],
+      mediaSrc: ["'self'", "https:", "http:", "blob:"],
+      objectSrc: ["'none'"],
+      frameSrc: ["'self'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"]
     }
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
 }));
 
 // CORS with strict origin control
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://lumixar.online', 'https://min-stream.click']
+  : ['https://lumixar.online', 'http://lumixar.online', 'https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080'];
+
 app.use(cors({
-  origin: ['https://lumixar.online', 'http://lumixar.online', 'https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080'],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[SECURITY] Blocked CORS request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -222,30 +249,28 @@ app.use(mongoSanitize());
 // Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// Apply API rate limiting to all API routes (sauf paiements) - DISABLED
-// app.use('/api', (req, res, next) => {
-//   // Exclure les routes de paiement du rate limiter global
-//   if (req.path.startsWith('/payment/') || req.path.startsWith('/subscription/')) {
-//     return next();
-//   }
-//   return apiLimiter(req, res, next);
-// });
+// Apply API rate limiting to all API routes (excluding payment routes)
+app.use('/api', (req, res, next) => {
+  // Exclude payment routes from global rate limiter (they have their own)
+  if (req.path.startsWith('/payment/') || req.path.startsWith('/subscription/')) {
+    return next();
+  }
+  return apiLimiter(req, res, next);
+});
 
-// Global rate limiter - DISABLED
-// const globalLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 1000, // Limit each IP to 1000 requests per windowMs
-//   message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
-//   standardHeaders: true,
-//   legacyHeaders: false
-// });
-// app.use(globalLimiter);
-
-// Strict rate limiter for auth endpoints - DISABLED
-// const authLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 20, // Limit each IP to 20 requests per windowMs
-// });
+// Global rate limiter for all routes
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // Limit each IP to 200 requests per 15 minutes
+  message: 'Trop de requêtes depuis cette IP, veuillez réessayer plus tard.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for static files in production
+    return process.env.NODE_ENV === 'production' && !req.path.startsWith('/api');
+  }
+});
+app.use(globalLimiter);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -371,7 +396,7 @@ function requireAdmin(req, res, next) {
 
 // ============ AUTH ROUTES ============
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     let { identifier, password } = req.body;
     
@@ -427,7 +452,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', registerLimiter, async (req, res) => {
   try {
     let { email, username, password, name } = req.body;
     
@@ -717,7 +742,8 @@ app.post('/api/movies', authenticateToken, requireAdmin, (req, res) => {
     createdAt: new Date().toISOString()
   };
   
-  movies.push(newMovie);
+  // Insérer le nouveau film en première position (top 1)
+  movies.unshift(newMovie);
   writeData(MOVIES_FILE, movies);
   
   res.status(201).json(newMovie);
@@ -1137,6 +1163,9 @@ app.get('/api/adblock/token', generateAdToken);
 
 // Verify ad was loaded
 app.post('/api/adblock/verify', verifyAdLoaded);
+
+// Verify if a token is still valid (for cache validation)
+app.post('/api/adblock/verify-token', verifyTokenValidity);
 
 // Get adblock detection stats (Admin only)
 app.get('/api/adblock/stats', authenticateToken, requireAdmin, getAdblockStats);

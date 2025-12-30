@@ -14,38 +14,7 @@ export function MobileBanner({ position = 'in-feed' }) {
   }
 
   useEffect(() => {
-    if (scriptLoadedRef.current) return;
-
-    const container = adContainerRef.current;
-    if (!container) return;
-
-    const configScript = document.createElement('script');
-    configScript.innerHTML = `
-      atOptions = {
-        'key' : '15b669b3aded17687abf412fb52b6e43',
-        'format' : 'iframe',
-        'height' : 50,
-        'width' : 320,
-        'params' : {}
-      };
-    `;
-
-    const invokeScript = document.createElement('script');
-    invokeScript.src = 'https://www.highperformanceformat.com/15b669b3aded17687abf412fb52b6e43/invoke.js';
-    invokeScript.async = true;
-
-    container.appendChild(configScript);
-    container.appendChild(invokeScript);
-    scriptLoadedRef.current = true;
-
-    return () => {
-      if (container) {
-        while (container.firstChild) {
-          container.removeChild(container.firstChild);
-        }
-      }
-      scriptLoadedRef.current = false;
-    };
+    // Scripts de publicité désactivés pour éviter les popups
   }, []);
 
   return (

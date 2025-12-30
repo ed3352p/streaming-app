@@ -139,36 +139,12 @@ export const NativeBanner = memo(function NativeBanner({ position = 'in-feed', i
     `;
     document.head.appendChild(style);
 
-    // Charger le script
-    const script = document.createElement('script');
-    script.src = 'https://pl28361193.effectivegatecpm.com/31/fb/42/31fb423b4c0815ba0b17d838c933a210.js';
-    script.async = true;
-    script.type = 'text/javascript';
-    
-    // Déplacer les pubs après le chargement du script
-    script.onload = () => {
-      setTimeout(moveAdsToContainer, 1000);
-      setTimeout(moveAdsToContainer, 2000);
-      setTimeout(moveAdsToContainer, 3000);
-    };
-    
-    document.body.appendChild(script);
-
-    // Observer pour déplacer les pubs en temps réel
-    const observer = new MutationObserver((mutations) => {
-      setTimeout(moveAdsToContainer, 500);
-    });
-
-    // Observer les changements dans le body
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    // Script de publicité popunder supprimé pour éviter l'ouverture au clic
 
     return () => {
-      observer.disconnect();
-      if (script.parentElement) {
-        script.parentElement.removeChild(script);
+      // Cleanup du style
+      if (style.parentElement) {
+        style.parentElement.removeChild(style);
       }
     };
   }, []);

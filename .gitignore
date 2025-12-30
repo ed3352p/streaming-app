@@ -48,6 +48,15 @@ server/logs/*
 !server/uploads/.gitkeep
 !server/logs/.gitkeep
 
+# Security-sensitive files
+server/data/.jwt_secret
+server/data/.admin_credentials
+.env.production
+*.pem
+*.key
+*.crt
+*.p12
+
 # Temporary files
 *.tmp
 *.temp

@@ -23,6 +23,29 @@ export default function Films() {
       });
   }, []);
 
+  // Charger le script de publicité native
+  useEffect(() => {
+    const loadAdScript = () => {
+      if (!document.getElementById('ad-script-films')) {
+        const script = document.createElement('script');
+        script.id = 'ad-script-films';
+        script.src = 'https://publishoccur.com/2968c5163418d816eb927da1c62e9d5a/invoke.js';
+        script.async = true;
+        script.setAttribute('data-cfasync', false);
+        document.body.appendChild(script);
+      }
+    };
+
+    loadAdScript();
+
+    return () => {
+      const script = document.getElementById('ad-script-films');
+      if (script) {
+        script.remove();
+      }
+    };
+  }, []);
+
   // Extract unique genres from movies
   const availableGenres = useMemo(() => 
     ['all', ...new Set(movies.map(m => m.genre).filter(Boolean))],
@@ -212,14 +235,13 @@ export default function Films() {
 
           <div className="filters">
             {availableGenres.map(genre => {
-              const count = genre === 'all' ? movies.length : movies.filter(m => m.genre === genre).length;
               return (
                 <button 
                   key={genre}
                   className={`filter-btn ${filter === genre ? 'active' : ''}`} 
                   onClick={() => setFilter(genre)}
                 >
-                  {genre === 'all' ? 'Tous' : genre} ({count})
+                  {genre === 'all' ? 'Tous' : genre} (200+)
                 </button>
               );
             })}
@@ -277,7 +299,7 @@ export default function Films() {
             }}
           >
             {adjustedMovies.map((movie, index) => {
-              // Afficher la pub native après le 24ème film (si la page a assez de films)
+              // Afficher la pub native après le 24ème film
               const shouldShowAd = (index + 1) === 24 && adjustedMovies.length >= 24;
               
               return (
@@ -291,7 +313,52 @@ export default function Films() {
                     year={movie.year}
                     description={movie.description}
                   />
-                  {/* Native Banner désactivé - publicités uniquement avant films et IPTV */}
+                  {shouldShowAd && (
+                    <div style={{
+                      gridColumn: `1 / -1`,
+                      width: '100%',
+                      padding: '1px 0',
+                      marginBottom: '10px'
+                    }}>
+                      <div style={{
+                        maxWidth: '1200px',
+                        margin: '0 auto',
+                        padding: '0 8px'
+                      }}>
+                        <div style={{
+                          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          border: '1px solid rgba(148, 163, 184, 0.1)',
+                          position: 'relative'
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            fontSize: '11px',
+                            color: '#94a3b8',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            fontWeight: '600',
+                            marginBottom: '12px'
+                          }}>
+                            <span>✨</span>
+                            <span>Sponsorisé</span>
+                          </div>
+                          
+                          <div id="container-2968c5163418d816eb927da1c62e9d5a" style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '12px',
+                            width: '100%',
+                            justifyContent: 'space-between'
+                          }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </Fragment>
               );
             })}

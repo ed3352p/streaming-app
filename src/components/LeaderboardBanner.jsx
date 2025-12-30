@@ -14,38 +14,7 @@ export function LeaderboardBanner({ position = 'in-feed' }) {
   }
 
   useEffect(() => {
-    if (scriptLoadedRef.current) return;
-
-    const container = adContainerRef.current;
-    if (!container) return;
-
-    const configScript = document.createElement('script');
-    configScript.innerHTML = `
-      atOptions = {
-        'key' : '6c562e9ec8edf0006e2a7bae4b0af641',
-        'format' : 'iframe',
-        'height' : 90,
-        'width' : 728,
-        'params' : {}
-      };
-    `;
-
-    const invokeScript = document.createElement('script');
-    invokeScript.src = 'https://www.highperformanceformat.com/6c562e9ec8edf0006e2a7bae4b0af641/invoke.js';
-    invokeScript.async = true;
-
-    container.appendChild(configScript);
-    container.appendChild(invokeScript);
-    scriptLoadedRef.current = true;
-
-    return () => {
-      if (container) {
-        while (container.firstChild) {
-          container.removeChild(container.firstChild);
-        }
-      }
-      scriptLoadedRef.current = false;
-    };
+    // Scripts de publicité désactivés pour éviter les popups
   }, []);
 
   return (
