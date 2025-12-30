@@ -127,7 +127,18 @@ print_success "Permissions configurées"
 # 8. Redémarrer l'application
 print_step "Redémarrage de l'application"
 cd "$APP_DIR"
-pm2 restart lumixar-backend
+
+# Supprimer tous les processus PM2
+print_info "Suppression des anciens processus PM2..."
+pm2 delete all 2>/dev/null || true
+
+# Redémarrer avec le fichier de config
+print_info "Démarrage avec ecosystem.config.cjs..."
+pm2 start ecosystem.config.cjs
+
+# Sauvegarder la configuration PM2
+print_info "Sauvegarde de la configuration PM2..."
+pm2 save
 
 sleep 3
 
