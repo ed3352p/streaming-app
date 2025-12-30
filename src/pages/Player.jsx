@@ -58,13 +58,13 @@ export default function Player() {
         const userIsPremium = user?.premium === true || user?.role === 'admin';
         setIsPremium(userIsPremium);
         
-        // Admins et Premium: jamais de pubs
+        // Admins et Premium: AUCUNE pub (0 pub)
         if (!adsEnabled || userIsPremium) {
           setShowAds(false);
           setVideoStarted(true);
           setAdsCount(0);
         } else {
-          // Normal: X pubs au début
+          // Utilisateurs gratuits: X pubs au début
           setShowAds(countNormal > 0);
           setVideoStarted(countNormal === 0);
           setAdsCount(countNormal);
@@ -95,8 +95,12 @@ export default function Player() {
   };
 
   const handleVideoEnd = () => {
-    // Pas de pub de fin pour les premium
-    // Les non-premium n'ont pas de pub de fin non plus
+    // Pas de pub de fin pour les Premium et Admin (AUCUNE pub)
+    // Les utilisateurs gratuits peuvent avoir des pubs de fin si configuré
+    if (!isPremium) {
+      // Possibilité d'ajouter des pubs de fin pour utilisateurs gratuits
+      // setShowEndAd(true);
+    }
   };
 
   if (loading) {

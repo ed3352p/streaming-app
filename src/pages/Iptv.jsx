@@ -37,11 +37,13 @@ export default function Iptv() {
       const activeAds = adsData.filter(ad => ad.active);
       setAds(activeAds.length > 0 ? activeAds : []);
 
+      // Premium et Admin: AUCUNE pub (0 pub)
       const userIsPremium = user?.premium === true || user?.role === 'admin';
       
       if (!adsEnabled || userIsPremium) {
         setAdsCount(0);
       } else {
+        // Utilisateurs gratuits: X pubs
         setAdsCount(countNormal);
       }
     } catch (err) {
@@ -139,6 +141,23 @@ export default function Iptv() {
       
       {selectedChannel && (
         <>
+          <style>{`
+            @keyframes modalFadeIn {
+              from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.95);
+              }
+              to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+              }
+            }
+            @keyframes overlayFadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+          `}</style>
+          
           {/* Overlay sombre */}
           <div 
             style={{
@@ -149,7 +168,7 @@ export default function Iptv() {
               bottom: 0,
               background: 'rgba(0, 0, 0, 0.85)',
               zIndex: 999,
-              animation: 'fadeIn 0.3s ease'
+              animation: 'overlayFadeIn 0.2s ease forwards'
             }}
             onClick={() => setSelectedChannel(null)}
           />
@@ -170,7 +189,8 @@ export default function Iptv() {
             border: '1px solid rgba(255,255,255,0.1)',
             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8)',
             zIndex: 1000,
-            animation: 'fadeIn 0.3s ease'
+            opacity: 1,
+            animation: 'modalFadeIn 0.25s ease forwards'
           }}>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px'}}>
               <div style={{flex: 1}}>

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment, useMemo, useCallback, useRef, useLayoutEffect } from 'react';
 import { Film, Search } from 'lucide-react';
 import MovieCard from "../components/MovieCard";
 import api from '../services/api';
 import { ExternalAdBanner } from '../components/ExternalAdBanner';
+import { NativeBanner } from '../components/NativeBanner';
 
 export default function Films() {
   const [movies, setMovies] = useState([]);
@@ -22,13 +23,16 @@ export default function Films() {
   }, []);
 
   // Extract unique genres from movies
-  const availableGenres = ['all', ...new Set(movies.map(m => m.genre).filter(Boolean))];
+  const availableGenres = useMemo(() => 
+    ['all', ...new Set(movies.map(m => m.genre).filter(Boolean))],
+    [movies]
+  );
 
-  const filteredMovies = movies.filter(movie => {
+  const filteredMovies = useMemo(() => movies.filter(movie => {
     const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || movie.genre === filter;
     return matchesSearch && matchesFilter;
-  });
+  }), [movies, searchTerm, filter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
@@ -41,8 +45,133 @@ export default function Films() {
     setCurrentPage(1);
   }, [searchTerm, filter]);
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
+  // Calculer le nombre de colonnes et ajuster les films affichés pour avoir des lignes complètes
+  const gridRef = useRef(null);
+  const [columnsCount, setColumnsCount] = useState(6);
+
+  useLayoutEffect(() => {
+    const calculateColumns = () => {
+      if (gridRef.current) {
+        const gridWidth = gridRef.current.offsetWidth;
+        const minCardWidth = 180;
+        const gap = 25;
+        const cols = Math.floor((gridWidth + gap) / (minCardWidth + gap));
+        setColumnsCount(Math.max(2, cols));
+      }
+    };
+
+    calculateColumns();
+    window.addEventListener('resize', calculateColumns);
+    return () => window.removeEventListener('resize', calculateColumns);
+  }, []);
+
+  // Ajuster le nombre de films pour avoir des lignes complètes
+  const adjustedMovies = useMemo(() => {
+    const remainder = currentMovies.length % columnsCount;
+    if (remainder === 0) return currentMovies;
+    return currentMovies.slice(0, currentMovies.length - remainder);
+  }, [currentMovies, columnsCount]);
+
   return (
     <div className="container">
+      <style>{`
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        
+        .ad-separator {
+          position: relative;
+          margin: 48px 0;
+        }
+        
+        .ad-separator::before,
+        .ad-separator::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          width: 45%;
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+        }
+        
+        .ad-separator::before {
+          left: 0;
+        }
+        
+        .ad-separator::after {
+          right: 0;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+          .container {
+            padding: 0 16px !important;
+          }
+          
+          .search-bar {
+            font-size: 14px !important;
+            padding: 12px 45px !important;
+          }
+          
+          .filters {
+            gap: 8px !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            scrollbar-width: none !important;
+          }
+          
+          .filters::-webkit-scrollbar {
+            display: none !important;
+          }
+          
+          .filter-btn {
+            font-size: 13px !important;
+            padding: 8px 16px !important;
+            white-space: nowrap !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .container {
+            padding: 0 12px !important;
+          }
+          
+          .search-bar {
+            font-size: 13px !important;
+            padding: 10px 40px !important;
+          }
+          
+          .filter-btn {
+            font-size: 12px !important;
+            padding: 6px 12px !important;
+          }
+          
+          /* Pagination mobile */
+          button[style*="padding: 10px 20px"] {
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+          }
+          
+          button[style*="padding: 10px 15px"] {
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+            min-width: 38px !important;
+          }
+        }
+      `}</style>
+      
       <ExternalAdBanner position="top" />
       
       <div style={{marginBottom: '40px'}}>
@@ -136,23 +265,44 @@ export default function Films() {
             </div>
           </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '25px'
-          }}>
-            {currentMovies.map(movie => (
-              <MovieCard 
-                key={movie.id} 
-                id={movie.id}
-                title={movie.title} 
-                rating={movie.rating || 0}
-                imageUrl={movie.imageUrl}
-                genre={movie.genre}
-                year={movie.year}
-                description={movie.description}
-              />
-            ))}
+          <div 
+            ref={gridRef}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+              gap: '25px',
+              contentVisibility: 'auto',
+              containIntrinsicSize: '0 500px'
+            }}
+          >
+            {adjustedMovies.map((movie, index) => {
+              // Afficher la pub native après le 24ème film (si la page a assez de films)
+              const shouldShowAd = (index + 1) === 24 && adjustedMovies.length >= 24;
+              
+              return (
+                <Fragment key={`movie-${movie.id}-${index}`}>
+                  <MovieCard 
+                    id={movie.id}
+                    title={movie.title} 
+                    rating={movie.rating || 0}
+                    imageUrl={movie.imageUrl}
+                    genre={movie.genre}
+                    year={movie.year}
+                    description={movie.description}
+                  />
+                  {/* Native Banner après 24 films */}
+                  {shouldShowAd && (
+                    <div style={{
+                      gridColumn: '1 / -1',
+                      margin: '48px 0',
+                      animation: 'fadeInScale 0.6s ease-out'
+                    }}>
+                      <NativeBanner key={`ad-page-${currentPage}`} position="in-feed" />
+                    </div>
+                  )}
+                </Fragment>
+              );
+            })}
           </div>
 
           {filteredMovies.length === 0 && (

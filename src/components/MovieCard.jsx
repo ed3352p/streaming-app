@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 
-export default function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre, year, description }) {
+const MovieCard = memo(function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre, year, description }) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -38,6 +38,8 @@ export default function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre
         <img 
           src={imageUrl}
           alt={title}
+          loading="lazy"
+          decoding="async"
           onError={() => setImageError(true)}
           style={{
             width: '100%',
@@ -149,4 +151,6 @@ export default function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre
       </div>
     </div>
   );
-}
+});
+
+export default MovieCard;

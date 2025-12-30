@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Film, Tv, TrendingUp, Users, Play, Star } from 'lucide-react';
 import MovieCard from "../components/MovieCard";
 import api from '../services/api';
 import { ExternalAdBanner } from '../components/ExternalAdBanner';
+import { NativeBanner } from '../components/NativeBanner';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
@@ -21,24 +22,21 @@ export default function Home() {
       });
   }, []);
 
-  const filteredMovies = movies.filter(movie => {
+  const filteredMovies = useMemo(() => movies.filter(movie => {
     const matchesSearch = movie.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || movie.genre === filter;
     return matchesSearch && matchesFilter;
-  });
+  }), [movies, searchTerm, filter]);
 
-  const stats = [
+  const stats = useMemo(() => [
     { icon: Film, label: 'Films', value: movies.length, color: '#3b82f6' },
     { icon: Tv, label: 'Chaînes IPTV', value: '500+', color: '#8b5cf6' },
     { icon: Users, label: 'Utilisateurs', value: '10K+', color: '#10b981' },
     { icon: TrendingUp, label: 'Vues', value: '1M+', color: '#f59e0b' }
-  ];
+  ], [movies.length]);
 
   return (
     <div>
-      {/* Bannière publicitaire en haut */}
-      <ExternalAdBanner position="top" />
-
       {/* Hero Section - Nouveau design */}
       <div className="hero-section" style={{
         position: 'relative',
@@ -192,6 +190,9 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Bannière publicitaire entre hero et contenu */}
+      <ExternalAdBanner position="top" isHomePage={true} />
+
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
@@ -216,11 +217,61 @@ export default function Home() {
           .hero-desc {
             text-align: center;
           }
+          
+          /* Catégories mobile */
+          .categories-grid {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          
+          /* Boutons mobile */
+          .btn {
+            font-size: 14px !important;
+            padding: 14px 28px !important;
+          }
+          
+          /* Premium section mobile */
+          .premium-section {
+            padding: 40px 24px !important;
+            margin-bottom: 40px !important;
+          }
+          
+          .premium-features {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
         }
         
         @media (max-width: 480px) {
           .hero-section {
             padding: 30px 0 !important;
+          }
+          
+          .container {
+            padding: 0 12px !important;
+          }
+          
+          /* Catégories très petit mobile */
+          .categories-grid {
+            gap: 12px !important;
+          }
+          
+          /* Boutons très petit mobile */
+          .btn {
+            font-size: 13px !important;
+            padding: 12px 24px !important;
+            width: 100% !important;
+          }
+          
+          /* Premium section très petit mobile */
+          .premium-section {
+            padding: 30px 16px !important;
+            margin-bottom: 30px !important;
+            border-radius: 16px !important;
+          }
+          
+          .btn-premium {
+            width: 100% !important;
           }
         }
       `}</style>
@@ -330,19 +381,31 @@ export default function Home() {
               </a>
             </div>
 
-            <div className="grid">
-              {movies.slice(0, 6).map(movie => (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '25px',
+              contentVisibility: 'auto',
+              containIntrinsicSize: '0 500px'
+            }}>
+              {movies.slice(0, 12).map(movie => (
                 <MovieCard 
                   key={movie.id} 
                   id={movie.id}
                   title={movie.title} 
                   rating={movie.rating || 0}
                   imageUrl={movie.imageUrl}
+                  genre={movie.genre}
+                  year={movie.year}
+                  description={movie.description}
                 />
               ))}
             </div>
           </div>
         )}
+
+        {/* Native Banner publicitaire */}
+        <NativeBanner position="in-feed" isHomePage={true} />
 
         {/* Section Premium */}
         <div className="premium-section" style={{

@@ -11,6 +11,10 @@ export default function ManageAds() {
   const [adsEnabled, setAdsEnabled] = useState(true);
   const [adsCountNormal, setAdsCountNormal] = useState(5);
   const [adsCountPremium, setAdsCountPremium] = useState(1);
+  const [headerAdsEnabled, setHeaderAdsEnabled] = useState(true);
+  const [nativeAdsEnabled, setNativeAdsEnabled] = useState(true);
+  const [popunderEnabled, setPopunderEnabled] = useState(true);
+  const [socialBarEnabled, setSocialBarEnabled] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingAd, setEditingAd] = useState(null);
   const [formData, setFormData] = useState({
@@ -28,14 +32,24 @@ export default function ManageAds() {
     setAdsEnabled(settings.enabled !== false);
     setAdsCountNormal(settings.countNormal || 5);
     setAdsCountPremium(settings.countPremium || 1);
+    setHeaderAdsEnabled(settings.headerAds !== false);
+    setNativeAdsEnabled(settings.nativeAds !== false);
+    setPopunderEnabled(settings.popunder !== false);
+    setSocialBarEnabled(settings.socialBar !== false);
   };
 
-  const saveSettings = (enabled, countNormal, countPremium) => {
-    const settings = { enabled, countNormal, countPremium };
+  const saveSettings = (newSettings) => {
+    const currentSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+    const settings = { ...currentSettings, ...newSettings };
     localStorage.setItem('lumixar_ads_settings', JSON.stringify(settings));
-    setAdsEnabled(enabled);
-    setAdsCountNormal(countNormal);
-    setAdsCountPremium(countPremium);
+    
+    if (newSettings.enabled !== undefined) setAdsEnabled(newSettings.enabled);
+    if (newSettings.countNormal !== undefined) setAdsCountNormal(newSettings.countNormal);
+    if (newSettings.countPremium !== undefined) setAdsCountPremium(newSettings.countPremium);
+    if (newSettings.headerAds !== undefined) setHeaderAdsEnabled(newSettings.headerAds);
+    if (newSettings.nativeAds !== undefined) setNativeAdsEnabled(newSettings.nativeAds);
+    if (newSettings.popunder !== undefined) setPopunderEnabled(newSettings.popunder);
+    if (newSettings.socialBar !== undefined) setSocialBarEnabled(newSettings.socialBar);
   };
 
   const loadAds = async () => {
@@ -168,12 +182,12 @@ export default function ManageAds() {
             ⚙️ Paramètres des Publicités
           </h3>
           
-          <div style={{display: 'flex', flexWrap: 'wrap', gap: '30px', alignItems: 'center'}}>
-            {/* Toggle Global */}
+          {/* Toggle Global */}
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', marginBottom: '25px'}}>
             <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
               <span style={{color: '#94a3b8'}}>Publicités:</span>
               <button
-                onClick={() => saveSettings(!adsEnabled, adsCountNormal, adsCountPremium)}
+                onClick={() => saveSettings({ enabled: !adsEnabled })}
                 style={{
                   background: adsEnabled ? '#22c55e' : '#ef4444',
                   color: 'white',
@@ -190,7 +204,6 @@ export default function ManageAds() {
               </button>
             </div>
 
-            {/* Nombre de pubs pour users normaux */}
             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
               <span style={{color: '#94a3b8'}}>Pubs (normal):</span>
               <input
@@ -198,7 +211,7 @@ export default function ManageAds() {
                 min="0"
                 max="10"
                 value={adsCountNormal}
-                onChange={(e) => saveSettings(adsEnabled, parseInt(e.target.value) || 0, adsCountPremium)}
+                onChange={(e) => saveSettings({ countNormal: parseInt(e.target.value) || 0 })}
                 style={{
                   width: '60px',
                   padding: '8px',
@@ -211,7 +224,6 @@ export default function ManageAds() {
               />
             </div>
 
-            {/* Nombre de pubs pour premium */}
             <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
               <span style={{color: '#94a3b8'}}>Pubs (premium):</span>
               <input
@@ -219,7 +231,7 @@ export default function ManageAds() {
                 min="0"
                 max="5"
                 value={adsCountPremium}
-                onChange={(e) => saveSettings(adsEnabled, adsCountNormal, parseInt(e.target.value) || 0)}
+                onChange={(e) => saveSettings({ countPremium: parseInt(e.target.value) || 0 })}
                 style={{
                   width: '60px',
                   padding: '8px',
@@ -233,7 +245,135 @@ export default function ManageAds() {
             </div>
           </div>
 
-          <p style={{color: '#64748b', fontSize: '12px', marginTop: '15px'}}>
+          {/* Types de pubs */}
+          <h4 style={{color: '#94a3b8', marginBottom: '15px', fontSize: '14px'}}>Types de publicités externes</h4>
+          <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px'}}>
+            {/* Header Ads */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              padding: '15px',
+              borderRadius: '10px',
+              border: `1px solid ${headerAdsEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <p style={{fontWeight: '600', marginBottom: '4px'}}>📌 Bannière Header</p>
+                <p style={{color: '#64748b', fontSize: '12px'}}>En haut des pages</p>
+              </div>
+              <button
+                onClick={() => saveSettings({ headerAds: !headerAdsEnabled })}
+                style={{
+                  background: headerAdsEnabled ? '#22c55e' : '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                {headerAdsEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {/* Native Ads */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              padding: '15px',
+              borderRadius: '10px',
+              border: `1px solid ${nativeAdsEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <p style={{fontWeight: '600', marginBottom: '4px'}}>✨ Native Banner</p>
+                <p style={{color: '#64748b', fontSize: '12px'}}>Dans le contenu</p>
+              </div>
+              <button
+                onClick={() => saveSettings({ nativeAds: !nativeAdsEnabled })}
+                style={{
+                  background: nativeAdsEnabled ? '#22c55e' : '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                {nativeAdsEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {/* Popunder */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              padding: '15px',
+              borderRadius: '10px',
+              border: `1px solid ${popunderEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <p style={{fontWeight: '600', marginBottom: '4px'}}>🗗️ Popunder</p>
+                <p style={{color: '#64748b', fontSize: '12px'}}>Fenêtre en arrière-plan</p>
+              </div>
+              <button
+                onClick={() => saveSettings({ popunder: !popunderEnabled })}
+                style={{
+                  background: popunderEnabled ? '#22c55e' : '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                {popunderEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {/* Social Bar */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              padding: '15px',
+              borderRadius: '10px',
+              border: `1px solid ${socialBarEnabled ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <p style={{fontWeight: '600', marginBottom: '4px'}}>📱 Social Bar</p>
+                <p style={{color: '#64748b', fontSize: '12px'}}>Barre flottante</p>
+              </div>
+              <button
+                onClick={() => saveSettings({ socialBar: !socialBarEnabled })}
+                style={{
+                  background: socialBarEnabled ? '#22c55e' : '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                {socialBarEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </div>
+
+          <p style={{color: '#64748b', fontSize: '12px', marginTop: '20px'}}>
             {adsEnabled 
               ? `Les utilisateurs normaux verront ${adsCountNormal} pub(s) avant le film. Les premium verront ${adsCountPremium} pub(s) à la fin.`
               : 'Toutes les publicités sont désactivées pour tous les utilisateurs.'

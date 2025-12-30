@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, memo } from 'react';
 import Hls from 'hls.js';
+import api from '../services/api';
 
-export default function VideoPlayerIPTV({ src, title }) {
+const VideoPlayerIPTV = memo(function VideoPlayerIPTV({ src, title }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const [error, setError] = useState(null);
@@ -16,141 +17,143 @@ export default function VideoPlayerIPTV({ src, title }) {
     const video = videoRef.current;
     if (!video || !src) return;
 
-    // Vérifier si l'utilisateur est premium ou admin
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const isPremium = user.premium === true || user.role === 'admin' || user.role === 'premium';
-    console.log('IPTV - User:', user);
-    console.log('IPTV - isPremium:', isPremium);
-
     setError(null);
     setIsLoading(true);
     let hls = null;
 
-    // Vérifier si c'est un flux HLS
-    if (src.includes('.m3u8')) {
-      if (Hls.isSupported()) {
-        hls = new Hls({
-          enableWorker: true,
-          lowLatencyMode: false,
-          maxBufferLength: 30,
-          maxMaxBufferLength: 60,
-          maxBufferSize: 60 * 1000 * 1000,
-          maxBufferHole: 0.5,
-          manifestLoadingTimeOut: 20000,
-          manifestLoadingMaxRetry: 4,
-          levelLoadingTimeOut: 20000,
-          levelLoadingMaxRetry: 4,
-          fragLoadingTimeOut: 20000,
-          fragLoadingMaxRetry: 6,
-          startLevel: -1, // Mode auto pour tous
-          capLevelToPlayerSize: false, // Désactiver la limitation de qualité basée sur la taille du player
-        });
-        
-        hls.loadSource(src);
-        hls.attachMedia(video);
-        
-        // Remplacer la section MANIFEST_PARSED
-hls.on(Hls.Events.MANIFEST_PARSED, () => {
-  console.log('HLS Levels disponibles:', hls.levels);
-  console.log('Utilisateur Premium:', isPremium);
-  
-  // Récupérer les qualités disponibles
-  const qualities = hls.levels.map((level, index) => ({
-    index,
-    height: level.height,
-    width: level.width,
-    bitrate: level.bitrate,
-    label: `${level.height}p`
-  }));
-  // Trier par qualité décroissante
-  qualities.sort((a, b) => b.height - a.height);
-  
-  // Pour les non-premium, filtrer à 360p max
-  const filteredQualities = isPremium 
-    ? qualities 
-    : qualities.filter(q => q.height <= 360);
-  // Si aucune qualité après filtrage, prendre la plus basse disponible
-  if (filteredQualities.length === 0 && qualities.length > 0) {
-    filteredQualities.push(qualities[qualities.length - 1]);
-  }
-  setAvailableQualities([
-    { index: -1, label: 'Auto', height: 0 },
-    ...filteredQualities
-  ]);
-  hlsRef.current = hls;
-  
-  // Définir la qualité maximale autorisée
-  if (filteredQualities.length > 0) {
-    const maxQuality = filteredQualities[0];
-    hls.currentLevel = maxQuality.index;
-    setQuality(`${maxQuality.height}p`);
-    setCurrentQualityLevel(maxQuality.index);
-    console.log(`Qualité définie sur: ${maxQuality.height}p`);
-  }
-  // Forcer la lecture
-  video.play().catch(err => {
-    console.log('Erreur de lecture automatique, tentative de lecture avec interaction utilisateur');
-  });
-  setIsLoading(false);
-});
+    // Vérification sécurisée côté serveur (anti-bypass)
+    const initPlayer = async () => {
+      // Appel API sécurisé pour vérifier le statut premium
+      const premiumStatus = await api.verifyPremium();
+      const maxQualityAllowed = premiumStatus.maxQuality || 360;
+      const isPremium = premiumStatus.isPremium === true;
+      
+      console.log('IPTV - Premium Status (from server):', premiumStatus);
+      console.log('IPTV - Max Quality Allowed:', maxQualityAllowed);
 
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          console.error('HLS Error:', data);
-          if (data.fatal) {
-            switch(data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                console.log('Network error, trying to recover...');
-                setError('Erreur réseau - Tentative de reconnexion...');
-                setTimeout(() => {
-                  hls.startLoad();
-                  setError(null);
-                }, 2000);
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                console.log('Media error, trying to recover...');
-                setError('Erreur média - Récupération...');
-                hls.recoverMediaError();
-                setTimeout(() => setError(null), 2000);
-                break;
-              default:
-                setError('Flux indisponible');
-                setIsLoading(false);
-                hls.destroy();
-                break;
+      // Vérifier si c'est un flux HLS
+      if (src.includes('.m3u8')) {
+        if (Hls.isSupported()) {
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: false,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            maxBufferSize: 60 * 1000 * 1000,
+            maxBufferHole: 0.5,
+            manifestLoadingTimeOut: 20000,
+            manifestLoadingMaxRetry: 4,
+            levelLoadingTimeOut: 20000,
+            levelLoadingMaxRetry: 4,
+            fragLoadingTimeOut: 20000,
+            fragLoadingMaxRetry: 6,
+            startLevel: -1,
+            capLevelToPlayerSize: false,
+          });
+          
+          hls.loadSource(src);
+          hls.attachMedia(video);
+          
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            console.log('HLS Levels disponibles:', hls.levels);
+            
+            const qualities = hls.levels.map((level, index) => ({
+              index,
+              height: level.height,
+              width: level.width,
+              bitrate: level.bitrate,
+              label: `${level.height}p`
+            }));
+            qualities.sort((a, b) => b.height - a.height);
+            
+            // Filtrer selon la qualité max autorisée par le serveur
+            const filteredQualities = isPremium 
+              ? qualities 
+              : qualities.filter(q => q.height <= maxQualityAllowed);
+            
+            if (filteredQualities.length === 0 && qualities.length > 0) {
+              filteredQualities.push(qualities[qualities.length - 1]);
             }
-          }
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Support natif pour Safari
+            
+            setAvailableQualities([
+              { index: -1, label: 'Auto', height: 0 },
+              ...filteredQualities
+            ]);
+            hlsRef.current = hls;
+            
+            if (filteredQualities.length > 0) {
+              const maxQuality = filteredQualities[0];
+              hls.currentLevel = maxQuality.index;
+              setQuality(`${maxQuality.height}p`);
+              setCurrentQualityLevel(maxQuality.index);
+              console.log(`Qualité définie sur: ${maxQuality.height}p (max autorisé: ${maxQualityAllowed}p)`);
+            }
+            
+            video.play().catch(() => {
+              console.log('Erreur de lecture automatique');
+            });
+            setIsLoading(false);
+          });
+
+          hls.on(Hls.Events.ERROR, (event, data) => {
+            console.error('HLS Error:', data);
+            if (data.fatal) {
+              switch(data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  setError('Erreur réseau - Tentative de reconnexion...');
+                  setTimeout(() => {
+                    hls.startLoad();
+                    setError(null);
+                  }, 2000);
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  setError('Erreur média - Récupération...');
+                  hls.recoverMediaError();
+                  setTimeout(() => setError(null), 2000);
+                  break;
+                default:
+                  setError('Flux indisponible');
+                  setIsLoading(false);
+                  hls.destroy();
+                  break;
+              }
+            }
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // Support natif pour Safari
+          video.src = src;
+          video.addEventListener('loadedmetadata', () => {
+            setIsLoading(false);
+            video.play()
+              .then(() => setIsPlaying(true))
+              .catch(() => console.log('Autoplay prevented'));
+          });
+          video.addEventListener('error', () => {
+            setError('Flux indisponible');
+            setIsLoading(false);
+          });
+        } else {
+          setError('HLS non supporté sur ce navigateur');
+          setIsLoading(false);
+        }
+      } else {
+        // Vidéo directe (MP4, etc.)
         video.src = src;
         video.addEventListener('loadedmetadata', () => {
           setIsLoading(false);
-          video.play()
-            .then(() => setIsPlaying(true))
-            .catch(err => console.log('Autoplay prevented:', err));
         });
         video.addEventListener('error', () => {
           setError('Flux indisponible');
           setIsLoading(false);
         });
-      } else {
-        setError('HLS non supporté sur ce navigateur');
-        setIsLoading(false);
+        video.play()
+          .then(() => setIsPlaying(true))
+          .catch(() => console.log('Autoplay prevented'));
       }
-    } else {
-      // Vidéo directe (MP4, etc.)
-      video.src = src;
-      video.addEventListener('loadedmetadata', () => {
-        setIsLoading(false);
-      });
-      video.addEventListener('error', () => {
-        setError('Flux indisponible');
-        setIsLoading(false);
-      });
-      video.play()
-        .then(() => setIsPlaying(true))
-        .catch(err => console.log('Autoplay prevented:', err));
-    }
+    };
+
+    // Lancer l'initialisation
+    initPlayer();
 
     return () => {
       if (hls) {
@@ -160,7 +163,7 @@ hls.on(Hls.Events.MANIFEST_PARSED, () => {
     };
   }, [src]);
 
-const handleQualityChange = (qualityIndex) => {
+const handleQualityChange = useCallback((qualityIndex) => {
   const hls = hlsRef.current;
   if (!hls) return;
 
@@ -182,7 +185,7 @@ const handleQualityChange = (qualityIndex) => {
   
   setCurrentQualityLevel(qualityIndex);
   setShowQualityMenu(false);
-};
+}, [availableQualities]);
 
   return (
     <div style={{position: 'relative', width: '100%', background: '#000', borderRadius: '12px', overflow: 'hidden'}}>
@@ -338,4 +341,6 @@ const handleQualityChange = (qualityIndex) => {
       </video>
     </div>
   );
-}
+});
+
+export default VideoPlayerIPTV;

@@ -5,6 +5,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PasswordChangeGuard from "./components/PasswordChangeGuard";
 import NavbarComponent from "./components/NavbarComponent";
 import Footer from "./components/Footer";
+import { PopunderAd } from "./components/PopunderAd";
+import { SocialBar } from "./components/SocialBar";
 import "./styles/main.css";
 
 // Lazy loading des pages pour optimisation
@@ -76,6 +78,8 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <PasswordChangeGuard>
+          <PopunderAd />
+          <SocialBar />
           <NavbarComponent />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>

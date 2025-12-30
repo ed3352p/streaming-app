@@ -2,12 +2,14 @@
 
 ###############################################################################
 # Script de déploiement automatique Lumixar sur Ubuntu
-# Version: 2.0
-# Date: 2025-12-27
+# Version: 3.0 - Clone Git automatique
+# Date: 2025-12-29
 # Usage: sudo bash deploy-ubuntu.sh
+# GitHub: https://github.com/ed3352p/streaming-app.git
 ###############################################################################
 
 set -e
+set -o pipefail
 
 echo "======================================"
 echo "🚀 Déploiement Lumixar sur Ubuntu"
@@ -33,11 +35,30 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Variables
+GIT_REPO="https://github.com/ed3352p/streaming-app.git"
+GIT_BRANCH="main"
 DOMAIN=""
 EMAIL=""
 APP_DIR="/var/www/lumixar"
+TEMP_DIR="/tmp/lumixar-install-$$"
 NODE_VERSION="20"
 USE_SSL="y"
+INSTALL_MODE="git"
+
+# Demander le mode d'installation
+print_step "Mode d'installation"
+echo "1) Clone depuis GitHub (recommandé)"
+echo "2) Utiliser les fichiers locaux"
+read -p "Choisissez (1 ou 2) [1]: " INSTALL_CHOICE
+INSTALL_CHOICE=${INSTALL_CHOICE:-1}
+
+if [ "$INSTALL_CHOICE" = "1" ]; then
+    INSTALL_MODE="git"
+    print_info "Mode: Clone depuis GitHub"
+else
+    INSTALL_MODE="local"
+    print_info "Mode: Fichiers locaux"
+fi
 
 # Demander les informations
 print_step "Configuration du déploiement"
@@ -55,6 +76,8 @@ fi
 
 echo ""
 print_info "Configuration:"
+print_info "  Mode: $INSTALL_MODE"
+[ "$INSTALL_MODE" = "git" ] && print_info "  Repository: $GIT_REPO"
 print_info "  Domaine: $DOMAIN"
 [ "$USE_SSL" = "y" ] && print_info "  Email: $EMAIL"
 print_info "  Répertoire: $APP_DIR"
@@ -105,7 +128,7 @@ ufw allow http > /dev/null 2>&1
 ufw allow https > /dev/null 2>&1
 print_success "Pare-feu configuré"
 
-# 6. Préparation répertoire
+# 6. Préparation et sauvegarde
 print_step "Préparation du répertoire d'application"
 if [ -d "$APP_DIR" ]; then
     print_info "Sauvegarde de l'ancienne installation..."
@@ -113,20 +136,64 @@ if [ -d "$APP_DIR" ]; then
     mkdir -p "$BACKUP_DIR"
     [ -d "$APP_DIR/server/data" ] && cp -r "$APP_DIR/server/data" "$BACKUP_DIR/" 2>/dev/null || true
     [ -f "$APP_DIR/.env" ] && cp "$APP_DIR/.env" "$BACKUP_DIR/" 2>/dev/null || true
+    [ -f "$APP_DIR/server/data/.admin_credentials" ] && cp "$APP_DIR/server/data/.admin_credentials" "$BACKUP_DIR/" 2>/dev/null || true
     print_success "Backup créé: $BACKUP_DIR"
     rm -rf "$APP_DIR"
 fi
 
 mkdir -p "$APP_DIR"
-print_success "Répertoire préparé"
+mkdir -p "$TEMP_DIR"
+print_success "Répertoires préparés"
 
-# 7. Copie des fichiers
-print_step "Installation des fichiers de l'application"
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cp -r "$SCRIPT_DIR"/* "$APP_DIR/" 2>/dev/null || true
-cp -r "$SCRIPT_DIR"/.* "$APP_DIR/" 2>/dev/null || true
+# 7. Clone ou copie des fichiers
+if [ "$INSTALL_MODE" = "git" ]; then
+    print_step "Clone du repository GitHub"
+    
+    # Vérifier que git est installé
+    if ! command -v git &> /dev/null; then
+        print_error "Git n'est pas installé. Installez-le avec: apt install git"
+    fi
+    
+    # Clone dans un répertoire temporaire
+    print_info "Clone depuis $GIT_REPO..."
+    if ! git clone --depth 1 --branch "$GIT_BRANCH" "$GIT_REPO" "$TEMP_DIR" 2>&1 | grep -v "Cloning"; then
+        print_error "Échec du clone Git. Vérifiez l'URL et votre connexion internet."
+    fi
+    
+    # Vérifier que le clone a réussi
+    if [ ! -d "$TEMP_DIR" ] || [ ! -f "$TEMP_DIR/package.json" ]; then
+        print_error "Le clone Git a échoué ou le repository est invalide"
+    fi
+    
+    # Copier les fichiers vers le répertoire final
+    print_info "Copie des fichiers vers $APP_DIR..."
+    cp -r "$TEMP_DIR"/* "$APP_DIR/" 2>/dev/null || true
+    cp -r "$TEMP_DIR"/.* "$APP_DIR/" 2>/dev/null || true
+    
+    # Nettoyer le répertoire temporaire
+    rm -rf "$TEMP_DIR"
+    
+    print_success "Repository cloné et fichiers copiés"
+else
+    print_step "Copie des fichiers locaux"
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    
+    # Vérifier que les fichiers locaux existent
+    if [ ! -f "$SCRIPT_DIR/package.json" ]; then
+        print_error "Fichiers locaux introuvables. Utilisez le mode Git (option 1)."
+    fi
+    
+    cp -r "$SCRIPT_DIR"/* "$APP_DIR/" 2>/dev/null || true
+    cp -r "$SCRIPT_DIR"/.* "$APP_DIR/" 2>/dev/null || true
+    print_success "Fichiers locaux copiés"
+fi
+
+# Vérifier que les fichiers essentiels sont présents
 cd "$APP_DIR"
-print_success "Fichiers copiés"
+if [ ! -f "package.json" ] || [ ! -d "server" ] || [ ! -d "src" ]; then
+    print_error "Fichiers essentiels manquants. Installation échouée."
+fi
+print_success "Vérification des fichiers: OK"
 
 # 8. Configuration .env
 print_step "Configuration de l'environnement"
@@ -167,19 +234,55 @@ print_success "Fichier .env créé"
 # 9. Installation dépendances backend
 print_step "Installation des dépendances backend"
 cd "$APP_DIR/server"
-npm install --production --silent
-print_success "Dépendances backend installées"
+
+# Vérifier que package.json existe
+if [ ! -f "package.json" ]; then
+    print_error "server/package.json introuvable"
+fi
+
+print_info "Installation en cours (cela peut prendre quelques minutes)..."
+if ! npm install --production 2>&1 | grep -E "(added|up to date|audited)"; then
+    print_error "Échec de l'installation des dépendances backend"
+fi
+
+# Vérifier que node_modules existe
+if [ ! -d "node_modules" ]; then
+    print_error "node_modules backend non créé"
+fi
+
+print_success "Dépendances backend installées ($(ls node_modules | wc -l) packages)"
 
 # 10. Installation dépendances frontend
 print_step "Installation des dépendances frontend"
 cd "$APP_DIR"
-npm install --silent
-print_success "Dépendances frontend installées"
+
+print_info "Installation en cours (cela peut prendre quelques minutes)..."
+if ! npm install 2>&1 | grep -E "(added|up to date|audited)"; then
+    print_error "Échec de l'installation des dépendances frontend"
+fi
+
+# Vérifier que node_modules existe
+if [ ! -d "node_modules" ]; then
+    print_error "node_modules frontend non créé"
+fi
+
+print_success "Dépendances frontend installées ($(ls node_modules | wc -l) packages)"
 
 # 11. Build frontend
 print_step "Build de l'application frontend"
-npm run build
-print_success "Frontend buildé"
+print_info "Build en cours (cela peut prendre quelques minutes)..."
+
+if ! npm run build 2>&1 | tail -20; then
+    print_error "Échec du build frontend"
+fi
+
+# Vérifier que le dossier dist existe et contient des fichiers
+if [ ! -d "dist" ] || [ ! -f "dist/index.html" ]; then
+    print_error "Build frontend échoué: dist/index.html introuvable"
+fi
+
+DIST_SIZE=$(du -sh dist | cut -f1)
+print_success "Frontend buildé avec succès (Taille: $DIST_SIZE)"
 
 # 12. Création des répertoires nécessaires
 print_step "Création des répertoires de données"
@@ -187,10 +290,23 @@ mkdir -p "$APP_DIR/server/data"
 mkdir -p "$APP_DIR/server/uploads"
 mkdir -p "$APP_DIR/server/chunks"
 mkdir -p "$APP_DIR/server/encoded"
+mkdir -p "$APP_DIR/server/thumbnails"
 mkdir -p "$APP_DIR/logs"
+
+# Restaurer les données de backup si elles existent
+if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
+    print_info "Restauration des données depuis le backup..."
+    [ -d "$BACKUP_DIR/data" ] && cp -r "$BACKUP_DIR/data"/* "$APP_DIR/server/data/" 2>/dev/null || true
+    [ -f "$BACKUP_DIR/.env" ] && cp "$BACKUP_DIR/.env" "$APP_DIR/" 2>/dev/null || true
+    [ -f "$BACKUP_DIR/.admin_credentials" ] && cp "$BACKUP_DIR/.admin_credentials" "$APP_DIR/server/data/" 2>/dev/null || true
+    print_success "Données restaurées"
+fi
+
 chmod -R 755 "$APP_DIR/server/data"
 chmod -R 755 "$APP_DIR/server/uploads"
-print_success "Répertoires créés"
+chmod -R 755 "$APP_DIR/server/chunks"
+chmod -R 755 "$APP_DIR/server/encoded"
+print_success "Répertoires créés et configurés"
 
 # 13. Configuration PM2
 print_step "Configuration de PM2"
@@ -216,11 +332,25 @@ module.exports = {
 };
 EOF
 
+# Arrêter l'ancienne instance si elle existe
 pm2 delete lumixar-backend 2>/dev/null || true
-pm2 start ecosystem.config.cjs
+sleep 2
+
+# Démarrer la nouvelle instance
+if ! pm2 start ecosystem.config.cjs 2>&1 | tail -10; then
+    print_error "Échec du démarrage PM2"
+fi
+
+sleep 3
+
+# Vérifier que l'application est bien démarrée
+if ! pm2 list | grep -q "lumixar-backend.*online"; then
+    print_error "L'application n'est pas en ligne. Vérifiez les logs: pm2 logs lumixar-backend"
+fi
+
 pm2 save
 pm2 startup systemd -u root --hp /root > /dev/null 2>&1 || true
-print_success "PM2 configuré et démarré"
+print_success "PM2 configuré et application démarrée"
 
 # 14. Configuration Nginx
 print_step "Configuration de Nginx"
@@ -327,9 +457,24 @@ fi
 
 ln -sf /etc/nginx/sites-available/lumixar /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
-nginx -t
-systemctl restart nginx
-print_success "Nginx configuré"
+
+# Tester la configuration Nginx
+print_info "Test de la configuration Nginx..."
+if ! nginx -t 2>&1 | tail -5; then
+    print_error "Configuration Nginx invalide"
+fi
+
+# Redémarrer Nginx
+if ! systemctl restart nginx; then
+    print_error "Échec du redémarrage Nginx"
+fi
+
+# Vérifier que Nginx est actif
+if ! systemctl is-active --quiet nginx; then
+    print_error "Nginx n'est pas actif"
+fi
+
+print_success "Nginx configuré et actif"
 
 # 15. SSL avec Let's Encrypt
 if [ "$USE_SSL" = "y" ]; then
@@ -359,16 +504,48 @@ print_success "Optimisations appliquées"
 print_step "Création des scripts utilitaires"
 
 # Script de mise à jour
-cat > "$APP_DIR/update.sh" << 'EOF'
+cat > "$APP_DIR/update.sh" << EOF
 #!/bin/bash
+set -e
 echo "🔄 Mise à jour de Lumixar..."
 cd /var/www/lumixar
-git pull
-npm install --production --silent
-cd server && npm install --production --silent && cd ..
+
+if [ -d ".git" ]; then
+    echo "📥 Pull depuis Git..."
+    git pull
+else
+    echo "⚠️  Pas de repository Git. Clone depuis GitHub..."
+    cd /tmp
+    rm -rf lumixar-update
+    git clone --depth 1 $GIT_REPO lumixar-update
+    cd lumixar-update
+    
+    # Backup des données
+    [ -d /var/www/lumixar/server/data ] && cp -r /var/www/lumixar/server/data /tmp/lumixar-data-backup
+    [ -f /var/www/lumixar/.env ] && cp /var/www/lumixar/.env /tmp/lumixar-env-backup
+    
+    # Copier les nouveaux fichiers
+    cp -r * /var/www/lumixar/
+    
+    # Restaurer les données
+    [ -d /tmp/lumixar-data-backup ] && cp -r /tmp/lumixar-data-backup/* /var/www/lumixar/server/data/
+    [ -f /tmp/lumixar-env-backup ] && cp /tmp/lumixar-env-backup /var/www/lumixar/.env
+    
+    cd /var/www/lumixar
+    rm -rf /tmp/lumixar-update
+fi
+
+echo "📦 Installation des dépendances..."
+npm install --production
+cd server && npm install --production && cd ..
+
+echo "🔨 Build du frontend..."
 npm run build
+
+echo "🔄 Redémarrage de l'application..."
 pm2 restart lumixar-backend
-echo "✓ Mise à jour terminée!"
+
+echo "✅ Mise à jour terminée!"
 EOF
 chmod +x "$APP_DIR/update.sh"
 
@@ -411,17 +588,38 @@ chmod +x "$APP_DIR/monitor.sh"
 
 print_success "Scripts utilitaires créés"
 
-# 18. Récupération des credentials admin
+# 18. Vérifications finales
+print_step "Vérifications finales"
+
+# Vérifier que le backend répond
+print_info "Test de l'API backend..."
+sleep 5
+if curl -s http://localhost:3001/api/health > /dev/null 2>&1 || curl -s http://localhost:3001 > /dev/null 2>&1; then
+    print_success "Backend répond correctement"
+else
+    print_info "Backend en cours de démarrage... (vérifiez les logs si problème)"
+fi
+
+# Vérifier Nginx
+if [ "$DOMAIN" = "localhost" ]; then
+    if curl -s http://localhost > /dev/null 2>&1; then
+        print_success "Nginx répond correctement"
+    else
+        print_error "Nginx ne répond pas"
+    fi
+fi
+
+# 19. Récupération des credentials admin
 print_step "Récupération des identifiants admin"
-sleep 2
+sleep 3
 if [ -f "$APP_DIR/server/data/.admin_credentials" ]; then
     cat "$APP_DIR/server/data/.admin_credentials"
 else
     print_info "Les identifiants admin seront générés au premier démarrage"
-    print_info "Vérifiez: cat $APP_DIR/server/data/.admin_credentials"
+    print_info "Attendez 10 secondes puis vérifiez: cat $APP_DIR/server/data/.admin_credentials"
 fi
 
-# 19. Affichage final
+# 20. Affichage final
 echo ""
 echo "======================================"
 echo "✅ INSTALLATION TERMINÉE!"

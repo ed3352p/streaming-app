@@ -67,6 +67,8 @@ class ApiService {
       body: JSON.stringify({ identifier, password }),
     });
     this.setToken(data.token);
+    // Sauvegarder l'utilisateur dans localStorage pour les composants qui en ont besoin
+    localStorage.setItem('user', JSON.stringify(data.user));
     return data.user;
   }
 
@@ -76,15 +78,34 @@ class ApiService {
       body: JSON.stringify(userData),
     });
     this.setToken(data.token);
+    // Sauvegarder l'utilisateur dans localStorage
+    localStorage.setItem('user', JSON.stringify(data.user));
     return data.user;
   }
 
   async getMe() {
-    return this.request('/api/auth/me');
+    const user = await this.request('/api/auth/me');
+    // Mettre à jour le localStorage avec les données fraîches
+    localStorage.setItem('user', JSON.stringify(user));
+    return user;
+  }
+
+  // Vérification sécurisée du statut premium (anti-bypass)
+  async verifyPremium() {
+    try {
+      const result = await this.request('/api/auth/verify-premium');
+      console.log('verifyPremium API result:', result);
+      return result;
+    } catch (err) {
+      console.error('verifyPremium error:', err);
+      // Si pas connecté ou erreur, retourner les valeurs par défaut (non-premium)
+      return { isPremium: false, maxQuality: 360, skipAds: false };
+    }
   }
 
   logout() {
     this.setToken(null);
+    localStorage.removeItem('user');
   }
 
   // ============ MOVIES ============

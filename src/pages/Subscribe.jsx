@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Bitcoin, Zap, Shield, Tag } from 'lucide-react';
+import { Check, Zap, Shield, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { SolanaPayment } from '../components/SolanaPayment';
 
 export default function Subscribe() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = useState({});
   const [loading, setLoading] = useState(true);
-  const [btcRate, setBtcRate] = useState(null);
+  const [solRate, setSolRate] = useState(null);
   const [promoCode, setPromoCode] = useState('');
   const [promoValid, setPromoValid] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -20,12 +22,18 @@ export default function Subscribe() {
 
   const loadData = async () => {
     try {
-      const [plansData, rateData] = await Promise.all([
-        api.getSubscriptionPlans(),
-        api.getBTCRate()
-      ]);
+      const plansData = await api.getSubscriptionPlans();
       setPlans(plansData);
-      setBtcRate(rateData.rate);
+      
+      // Charger le taux SOL/USD (exemple: CoinGecko API)
+      try {
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
+        const data = await response.json();
+        setSolRate(data.solana.usd);
+      } catch (err) {
+        console.log('Taux SOL non disponible');
+        setSolRate(100); // Fallback
+      }
     } catch (err) {
       console.error('Error loading data:', err);
     } finally {
@@ -44,18 +52,26 @@ export default function Subscribe() {
     }
   };
 
-  const handleSubscribe = async (planId) => {
+  const handleSubscribe = (planId) => {
     if (!user) {
       navigate('/login');
       return;
     }
 
-    try {
-      const payment = await api.createPayment(planId, promoValid?.valid ? promoCode : null);
-      navigate(`/payment/${payment.id}`);
-    } catch (err) {
-      alert('Erreur: ' + err.message);
-    }
+    const plan = plans[planId];
+    setSelectedPlan({ ...plan, id: planId });
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = async (signature) => {
+    setTimeout(() => {
+      navigate('/payment-success?method=solana&tx=' + signature);
+    }, 2000);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPayment(false);
+    setSelectedPlan(null);
   };
 
   if (loading) {
@@ -92,13 +108,13 @@ export default function Subscribe() {
           gap: '10px',
           marginTop: '20px',
           padding: '10px 20px',
-          background: 'rgba(249, 115, 22, 0.1)',
-          border: '1px solid #f97316',
+          background: 'rgba(153, 69, 255, 0.1)',
+          border: '1px solid #9945FF',
           borderRadius: '8px'
         }}>
-          <Bitcoin size={20} style={{color: '#f97316'}} />
-          <span style={{color: '#f97316', fontWeight: '600'}}>
-            Paiement Bitcoin uniquement
+          <span style={{fontSize: '24px'}}>◎</span>
+          <span style={{color: '#9945FF', fontWeight: '600'}}>
+            Paiement Solana uniquement
           </span>
         </div>
       </div>
@@ -242,7 +258,7 @@ export default function Subscribe() {
                   )}
                 </div>
                 <div style={{fontSize: '14px', opacity: 0.8, marginBottom: '5px'}}>
-                  ≈ {plan.priceBTC} BTC
+                  ≈ {solRate ? (finalPrice / solRate).toFixed(2) : '...'} SOL
                 </div>
                 <div style={{fontSize: '12px', opacity: 0.6}}>
                   {plan.duration} jours
@@ -268,13 +284,13 @@ export default function Subscribe() {
                 className="btn"
                 style={{
                   width: '100%',
-                  background: isPopular ? 'white' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                  background: isPopular ? 'white' : 'linear-gradient(135deg, #9945FF, #14F195)',
                   color: isPopular ? '#7c3aed' : 'white',
                   fontWeight: '600'
                 }}
               >
-                <Bitcoin size={20} style={{marginRight: '8px'}} />
-                Payer avec Bitcoin
+                <span style={{fontSize: '20px', marginRight: '8px'}}>◎</span>
+                Payer avec Solana
               </button>
             </div>
           );
@@ -309,7 +325,7 @@ export default function Subscribe() {
             <Shield size={48} style={{color: '#3b82f6', margin: '0 auto 15px'}} />
             <h3 style={{marginBottom: '10px'}}>Paiement Sécurisé</h3>
             <p style={{color: '#94a3b8'}}>
-              Transactions Bitcoin 100% sécurisées et anonymes
+              Transactions Solana rapides, sécurisées et à faible coût
             </p>
           </div>
           <div style={{textAlign: 'center'}}>
@@ -322,24 +338,48 @@ export default function Subscribe() {
         </div>
       </div>
 
-      {/* BTC Info */}
-      {btcRate && (
+      {/* SOL Info */}
+      {solRate && (
         <div style={{
           textAlign: 'center',
           padding: '20px',
-          background: 'rgba(249, 115, 22, 0.1)',
-          border: '1px solid #f97316',
+          background: 'rgba(153, 69, 255, 0.1)',
+          border: '1px solid #9945FF',
           borderRadius: '12px',
           maxWidth: '600px',
           margin: '0 auto'
         }}>
-          <Bitcoin size={32} style={{color: '#f97316', margin: '0 auto 10px'}} />
+          <div style={{fontSize: '48px', margin: '0 auto 10px'}}>◎</div>
           <p style={{color: '#94a3b8', marginBottom: '5px'}}>
-            Taux Bitcoin actuel
+            Taux Solana actuel
           </p>
-          <p style={{fontSize: '24px', fontWeight: 'bold', color: '#f97316'}}>
-            1 BTC = ${btcRate.toLocaleString()}
+          <p style={{fontSize: '24px', fontWeight: 'bold', color: '#9945FF'}}>
+            1 SOL = ${solRate.toLocaleString()}
           </p>
+        </div>
+      )}
+
+      {/* Payment Modal */}
+      {showPayment && selectedPlan && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.9)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          overflowY: 'auto'
+        }}>
+          <SolanaPayment
+            plan={selectedPlan}
+            onSuccess={handlePaymentSuccess}
+            onCancel={handlePaymentCancel}
+          />
         </div>
       )}
     </div>

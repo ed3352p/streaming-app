@@ -46,6 +46,13 @@ import {
   getBTCRate
 } from './utils/bitcoin.js';
 import {
+  SUBSCRIPTION_PLANS as SOLANA_PLANS,
+  verifySolanaTransaction,
+  verifyAndActivateSubscription,
+  getUserSubscription as getSolanaSubscription,
+  getSOLRate
+} from './utils/solana.js';
+import {
   createAccessCode,
   redeemAccessCode,
   getAllAccessCodes,
@@ -505,6 +512,25 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
     premium: user.premium || user.role === 'admin',
     name: user.name || user.username,
     mustChangePassword: user.mustChangePassword || false
+  });
+});
+
+// Endpoint sécurisé pour vérifier le statut premium (anti-bypass)
+app.get('/api/auth/verify-premium', authenticateToken, (req, res) => {
+  const users = readData(USERS_FILE);
+  const user = users.find(u => u.id === req.user.id);
+  
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé', isPremium: false, maxQuality: 360 });
+  }
+  
+  const isPremium = user.premium === true || user.role === 'admin';
+  
+  res.json({
+    isPremium,
+    role: user.role,
+    maxQuality: isPremium ? 9999 : 360, // 9999 = illimité, 360 = max pour gratuit
+    skipAds: isPremium
   });
 });
 
@@ -1514,6 +1540,63 @@ app.get('/api/payment/btc-rate', async (req, res) => {
   }
 });
 
+// Get SOL rate
+app.get('/api/payment/sol-rate', async (req, res) => {
+  try {
+    const rate = await getSOLRate();
+    res.json(rate);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur récupération taux SOL' });
+  }
+});
+
+// Verify Solana payment
+app.post('/api/verify-solana-payment', authenticateToken, async (req, res) => {
+  try {
+    const { userId, planId, signature, amount } = req.body;
+    
+    if (!userId || !planId || !signature || !amount) {
+      return res.status(400).json({ error: 'Données manquantes' });
+    }
+
+    // Vérifier que l'utilisateur correspond
+    if (userId !== req.user.id) {
+      return res.status(403).json({ error: 'Non autorisé' });
+    }
+
+    // Activer l'abonnement
+    const subscription = await verifyAndActivateSubscription(userId, planId, signature, amount);
+    
+    // Mettre à jour le statut premium de l'utilisateur
+    const users = readData(USERS_FILE);
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex !== -1) {
+      users[userIndex].premium = true;
+      users[userIndex].premiumUntil = subscription.endDate;
+      writeData(USERS_FILE, users);
+    }
+
+    logger.info('Solana payment verified and subscription activated', { 
+      userId, 
+      planId, 
+      signature,
+      ip: req.ip 
+    });
+    
+    res.json({ 
+      success: true, 
+      subscription,
+      message: 'Abonnement Premium activé avec succès!' 
+    });
+  } catch (err) {
+    logger.error('Solana payment verification error', { 
+      error: err.message, 
+      userId: req.user.id 
+    });
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Create BTC payment
 app.post('/api/payment/create', authenticateToken, async (req, res) => {
   try {
@@ -1588,7 +1671,11 @@ app.get('/api/payments', authenticateToken, (req, res) => {
 // Get user subscription
 app.get('/api/subscription', authenticateToken, (req, res) => {
   try {
-    const subscription = getUserSubscription(req.user.id);
+    // Essayer d'abord Solana, puis Bitcoin
+    let subscription = getSolanaSubscription(req.user.id);
+    if (!subscription) {
+      subscription = getUserSubscription(req.user.id);
+    }
     res.json(subscription || null);
   } catch (err) {
     res.status(500).json({ error: 'Erreur serveur' });

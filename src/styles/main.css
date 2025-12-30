@@ -4,6 +4,22 @@
   box-sizing: border-box;
 }
 
+/* Performance optimizations */
+html {
+  scroll-behavior: smooth;
+}
+
+img, video {
+  content-visibility: auto;
+}
+
+/* GPU acceleration for animations */
+.card, .btn, .filter-btn, .navbar a {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 body { 
   background: #0a0e1a;
   background-image: 
@@ -113,7 +129,7 @@ body {
 }
 
 .card:hover {
-  transform: translateY(-10px) scale(1.02);
+  transform: translateY(-10px) scale(1.02) translateZ(0);
   box-shadow: 
     0 20px 25px -5px rgba(0, 0, 0, 0.4),
     0 10px 10px -5px rgba(0, 0, 0, 0.3),
@@ -725,6 +741,10 @@ body {
 
 /* Touch device optimizations */
 @media (hover: none) and (pointer: coarse) {
+  .card, .btn, .filter-btn, .navbar a {
+    will-change: auto;
+  }
+  
   .card:hover {
     transform: none;
   }

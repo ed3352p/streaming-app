@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Play, Tv, CreditCard, User, LogOut, Shield, Sparkles, Film, Menu, X, Key } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -11,22 +11,29 @@ export default function NavbarComponent() {
   const location = useLocation();
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/');
-  };
+  }, [logout, navigate]);
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
 
-  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const toggleMobileMenu = useCallback(() => setMobileMenuOpen(prev => !prev), []);
 
   return (
     <>
@@ -65,7 +72,7 @@ export default function NavbarComponent() {
           onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           <img 
-            src="/logo.png" 
+            src="/logo.svg" 
             alt="Lumixar Logo" 
             style={{
               height: '50px',
@@ -394,7 +401,7 @@ export default function NavbarComponent() {
   );
 }
 
-function NavLink({ href, icon: Icon, label, active, premium, admin }) {
+const NavLink = memo(function NavLink({ href, icon: Icon, label, active, premium, admin }) {
   return (
     <a
       href={href}
@@ -462,9 +469,9 @@ function NavLink({ href, icon: Icon, label, active, premium, admin }) {
       )}
     </a>
   );
-}
+});
 
-function MobileNavLink({ href, icon: Icon, label, active, premium, admin, onClick }) {
+const MobileNavLink = memo(function MobileNavLink({ href, icon: Icon, label, active, premium, admin, onClick }) {
   return (
     <a
       href={href}
@@ -500,4 +507,4 @@ function MobileNavLink({ href, icon: Icon, label, active, premium, admin, onClic
       {label}
     </a>
   );
-}
+});
