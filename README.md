@@ -1,251 +1,299 @@
-<div align="center">
+# 🎬 Lumixar - Plateforme de Streaming Professionnelle
 
-# 🦄 Lumixar
+[![Version](https://img.shields.io/badge/version-4.0-blue.svg)](https://github.com/ed3352p/streaming-app)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org)
 
-### Plateforme de Streaming Premium - Films, Séries & IPTV
+Plateforme de streaming vidéo complète avec fonctionnalités avancées professionnelles : IPTV, EPG, DVR, sécurité renforcée, contrôle parental et bien plus.
 
-[![React](https://img.shields.io/badge/React-19.2.0-61DAFB?style=flat&logo=react&logoColor=white)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.2.4-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.18-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## ✨ Fonctionnalités Principales
 
-[🌐 Demo](https://lumixar.online) • [📖 Documentation](./DEPLOY.md) • [🚀 Installation](./INSTALLATION.md)
+### 🎥 Streaming & Contenu
+- **Films & Séries** - Gestion complète avec métadonnées, trailers, notes
+- **IPTV en Direct** - Chaînes TV en streaming avec EPG intégré
+- **Multi-formats** - Support HLS, MP4, M3U8
+- **Lecteur Avancé** - Contrôles personnalisés, qualité adaptative, sous-titres
 
-</div>
+### 📺 IPTV Professionnel
+- **EPG (Guide TV)** - Programme TV complet 48h avec recherche
+- **Cloud DVR** - Enregistrement et programmation d'émissions
+- **Statistiques Chaînes** - Analytics en temps réel par chaîne
+- **Favoris** - Gestion des chaînes favorites
 
----
+### ⚡ Infrastructure Pro
+- **Load Balancing** - Distribution automatique multi-serveurs
+- **Video Preloading** - Cache intelligent des vidéos populaires
+- **Auto-Backup** - Sauvegardes quotidiennes automatiques (30 jours)
+- **Failover** - Basculement automatique en cas de panne
 
-## ✨ Fonctionnalités
+### 🔐 Sécurité Avancée
+- **Device Fingerprinting** - Identification unique multi-facteurs
+- **Session Binding** - Liaison IP + Device par session
+- **VPN Detection** - Détection VPN/Proxy avec scoring
+- **Screen Recording Detection** - Anti-piratage avec blocage automatique
+- **Rate Limiting** - Protection DDoS et brute force
 
-### 🎬 Contenu Multimédia
-- **Films HD/4K** - Catalogue de films en haute qualité
-- **Séries TV** - Épisodes complets avec gestion des saisons
-- **IPTV Live** - Chaînes TV en direct avec support HLS
-- **Lecteur Vidéo** - Player personnalisé avec contrôles avancés
+### ⚖️ Legal & Conformité
+- **Terms of Service** - CGU avec versioning et tracking
+- **Privacy Policy** - Politique de confidentialité GDPR
+- **Cookie Policy** - Gestion des cookies et consentements
+- **Parental Controls** - Contrôle parental avec PIN et profils enfants
+- **Content Moderation** - Système de modération et avertissements
 
-### 🎨 Interface Utilisateur
-- **Design Moderne** - Interface élégante et responsive
-- **Mode Sombre** - Thème sombre par défaut optimisé
-- **Navigation Intuitive** - Expérience utilisateur fluide
-- **Recherche Avancée** - Filtres par genre, année, note
+### 💰 Monétisation
+- **Système Premium** - Abonnements avec codes d'accès
+- **Paiements Crypto** - Bitcoin & Solana intégrés
+- **Publicités** - Gestion intelligente des ads avec fréquence
+- **Parrainage** - Système de référence avec récompenses
 
-### 🔐 Gestion des Utilisateurs
-- **Authentification JWT** - Système de connexion sécurisé
-- **Profils Utilisateurs** - Gestion des comptes personnalisés
-- **Favoris & Historique** - Sauvegarde des préférences
-- **Panel Admin** - Interface d'administration complète
-
-### ⚡ Performance
-- **Streaming HLS** - Lecture adaptative de qualité
-- **Cache Optimisé** - Chargement rapide des contenus
-- **SEO Friendly** - Optimisé pour les moteurs de recherche
-- **PWA Ready** - Installation possible sur mobile
-
----
+### 🎨 UX/UI Moderne
+- **Design Responsive** - Mobile, tablette, desktop optimisés
+- **Mode Sombre** - Interface élégante et confortable
+- **Multi-langues** - i18n avec détection automatique
+- **PWA** - Installation comme application native
+- **Notifications Push** - Alertes en temps réel
 
 ## 🚀 Installation Rapide
 
 ### Prérequis
-- **Node.js** 20+ et npm
-- **Serveur Ubuntu/Debian** (pour production)
-- **Nom de domaine** (optionnel)
+- Node.js 18+ et npm
+- Ubuntu/Debian (pour déploiement serveur)
 
-### Installation Automatique (Production)
-
-```bash
-# Cloner le dépôt
-git clone https://github.com/ed3352p/streaming-app.git
-cd streaming-app
-
-# Déploiement automatique sur Ubuntu/Debian
-sudo bash deploy-ubuntu.sh
-```
-
-Le script configure automatiquement :
-- ✅ Node.js, npm, nginx, PM2
-- ✅ SSL/HTTPS avec Let's Encrypt
-- ✅ Pare-feu et sécurité
-- ✅ Backups automatiques
-- ✅ Monitoring système
-
-📖 **Guide complet** : [INSTALLATION.md](./INSTALLATION.md)
-
-### Installation Locale (Développement)
+### Développement Local
 
 ```bash
-# Cloner le dépôt
+# Cloner le projet
 git clone https://github.com/ed3352p/streaming-app.git
 cd streaming-app
 
 # Installer les dépendances
 npm install
+cd server && npm install && cd ..
 
-# Configurer l'environnement
-cp .env.example .env
-# Éditer .env avec vos paramètres
-
-# Démarrer le serveur backend et frontend
+# Démarrer (frontend + backend)
 npm start
 ```
 
-L'application sera accessible sur :
-- **Frontend** : http://localhost:5173
-- **Backend API** : http://localhost:3001
+**Accès :**
+- Frontend : http://localhost:5050
+- Backend API : http://localhost:3001
 
----
+**Identifiants admin :** Voir `server/data/.admin_credentials`
 
-## 🛠️ Stack Technique
+### Déploiement Production (Ubuntu)
 
-### Frontend
-- **React 19.2** - Framework UI moderne
-- **React Router 7** - Navigation SPA
-- **TailwindCSS 4** - Styling utility-first
-- **Lucide React** - Icônes élégantes
-- **HLS.js** - Streaming vidéo adaptatif
-- **Vite 7** - Build tool ultra-rapide
-
-### Backend
-- **Node.js** - Runtime JavaScript
-- **Express** - Framework web minimaliste
-- **JWT** - Authentification sécurisée
-- **JSON Database** - Stockage léger
-
-### DevOps
-- **PM2** - Process manager production
-- **Nginx** - Reverse proxy & serveur web
-- **Let's Encrypt** - Certificats SSL gratuits
-- **UFW** - Pare-feu Linux
-
----
-
-## 📁 Structure du Projet
-
-```
-streaming-app/
-├── src/                      # Code source frontend
-│   ├── components/          # Composants React
-│   ├── pages/              # Pages de l'application
-│   ├── contexts/           # Contexts React (Auth, etc.)
-│   ├── hooks/              # Custom hooks
-│   └── main.jsx            # Point d'entrée
-├── server/                  # Backend Node.js
-│   ├── index.js            # Serveur Express
-│   ├── data/               # Base de données JSON
-│   ├── uploads/            # Fichiers uploadés
-│   └── logs/               # Logs backend
-├── public/                  # Fichiers statiques
-│   ├── _headers            # Headers HTTP
-│   ├── _redirects          # Redirections
-│   ├── robots.txt          # SEO
-│   └── sitemap.xml         # Sitemap
-├── deploy-ubuntu.sh        # Script de déploiement auto
-├── .env.example            # Template configuration
-├── package.json            # Dépendances npm
-└── vite.config.js          # Configuration Vite
-```
-
----
-
-## 🎯 Commandes Disponibles
-
-### Développement
 ```bash
-npm run dev          # Démarrer frontend (Vite)
-npm run server       # Démarrer backend (Node.js)
-npm start            # Démarrer frontend + backend
+# Télécharger et exécuter le script
+wget https://raw.githubusercontent.com/ed3352p/streaming-app/main/deploy-ubuntu.sh
+sudo bash deploy-ubuntu.sh
 ```
 
-### Production
-```bash
-npm run build        # Build pour production
-npm run preview      # Prévisualiser le build
-npm run lint         # Vérifier le code
-```
+Le script installe **automatiquement** :
+- ✅ Node.js, PM2, Nginx
+- ✅ Certificat SSL (Let's Encrypt)
+- ✅ Toutes les dépendances
+- ✅ Configuration optimisée
+- ✅ Backups automatiques
+- ✅ Monitoring et scripts utilitaires
 
-### Gestion (Production)
-```bash
-pm2 status                    # Status de l'application
-pm2 logs lumixar-backend     # Voir les logs
-pm2 restart lumixar-backend  # Redémarrer
-./monitor.sh                 # Monitoring système
-./update.sh                  # Mise à jour
-```
-
----
-
-## 🔧 Configuration
+## 📋 Configuration
 
 ### Variables d'Environnement
 
-Créer un fichier `.env` à la racine :
+Créer `.env` à la racine et `server/.env` :
 
 ```env
-# API Backend
-VITE_API_URL=http://localhost:3001/api
+# Frontend (.env)
+VITE_API_URL=http://localhost:3001
+
+# Backend (server/.env)
+NODE_ENV=production
 PORT=3001
+JWT_SECRET=votre_secret_jwt_ici
 
-# Environnement
-NODE_ENV=development
+# Notifications Push (optionnel)
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_EMAIL=admin@domain.com
 
-# Sécurité JWT
-JWT_SECRET=votre_cle_secrete_forte_64_caracteres_minimum
-SESSION_DURATION=86400
+# EPG Source
+EPG_SOURCE_URL=https://iptv-org.github.io/epg/guides/
 
-# CORS
-CORS_ORIGIN=http://localhost:5173,http://localhost:3001
+# VPN Detection (optionnel)
+VPN_API_KEY=votre_cle_api
 
-# Uploads
-MAX_FILE_SIZE=100
-
-# Rate Limiting
-RATE_LIMIT_WINDOW=900000
-RATE_LIMIT_MAX_REQUESTS=100
+# Backup
+BACKUP_RETENTION_DAYS=30
+AUTO_BACKUP_INTERVAL_HOURS=24
 ```
 
-📝 Voir [.env.example](./.env.example) pour toutes les options
-
----
-
-## 🔐 Sécurité
-
-- **JWT Authentication** - Tokens sécurisés pour l'authentification
-- **Rate Limiting** - Protection contre les attaques DDoS
-- **CORS** - Configuration stricte des origines
-- **Helmet.js** - Headers HTTP sécurisés
-- **Input Validation** - Validation des données utilisateur
-- **SSL/TLS** - HTTPS en production avec Let's Encrypt
-
----
-
-## 📊 Monitoring & Logs
-
-### Logs Backend
+**Générer les clés VAPID :**
 ```bash
-pm2 logs lumixar-backend --lines 100
+cd server
+npx web-push generate-vapid-keys
 ```
 
-### Logs Nginx
+## 🛠️ Commandes Utiles
+
+### Développement
 ```bash
-tail -f /var/log/nginx/lumixar-access.log
-tail -f /var/log/nginx/lumixar-error.log
+npm start              # Démarrer dev (frontend + backend)
+npm run dev            # Frontend uniquement
+npm run server         # Backend uniquement
+npm run build          # Build production
 ```
 
-### Monitoring Système
+### Production (après déploiement)
 ```bash
-./monitor.sh        # Script de monitoring personnalisé
-pm2 monit          # Monitoring PM2 interactif
-htop               # Ressources système
+/var/www/lumixar/monitor.sh           # Status complet
+/var/www/lumixar/test-features.sh     # Tester fonctionnalités
+pm2 logs lumixar-backend              # Voir les logs
+pm2 restart lumixar-backend           # Redémarrer
+/var/www/lumixar/update.sh            # Mise à jour
+/root/backup-lumixar.sh               # Backup manuel
 ```
 
----
+## 📊 Architecture
 
-## 🚨 Dépannage
+```
+streaming-app/
+├── src/                    # Frontend React
+│   ├── components/         # Composants réutilisables
+│   ├── pages/             # Pages principales
+│   ├── context/           # Context API (Auth, etc.)
+│   └── assets/            # Images, styles
+├── server/                # Backend Express
+│   ├── index.js           # Point d'entrée
+│   ├── data/              # Base de données JSON
+│   ├── utils/             # Utilitaires (EPG, DVR, Security, etc.)
+│   ├── middleware/        # Middlewares custom
+│   └── routes/            # Routes API avancées
+├── public/                # Fichiers statiques
+└── deploy-ubuntu.sh       # Script de déploiement auto
+```
 
-### L'application ne démarre pas
+## 🔌 API Endpoints
+
+### Authentification
+- `POST /api/register` - Inscription
+- `POST /api/login` - Connexion
+- `POST /api/logout` - Déconnexion
+
+### Contenu
+- `GET /api/movies` - Liste des films
+- `GET /api/series` - Liste des séries
+- `GET /api/iptv` - Chaînes IPTV
+- `GET /api/search` - Recherche globale
+
+### IPTV Avancé
+- `GET /api/epg/channel/:id` - Guide TV
+- `POST /api/dvr/schedule` - Programmer enregistrement
+- `GET /api/dvr/recordings/:userId` - Mes enregistrements
+- `GET /api/channels/stats/:id` - Stats chaîne
+- `GET /api/channels/top` - Top chaînes
+
+### Sécurité
+- `POST /api/security/fingerprint` - Enregistrer device
+- `POST /api/security/vpn-detect` - Détecter VPN
+- `POST /api/security/recording-detection` - Signaler enregistrement
+
+### Legal
+- `POST /api/terms/accept` - Accepter CGU
+- `POST /api/parental-controls/setup` - Config contrôle parental
+- `POST /api/moderation/flag` - Signaler contenu
+
+### Infrastructure
+- `GET /api/infrastructure/servers` - Status serveurs
+- `GET /api/infrastructure/backups` - Liste backups
+- `POST /api/infrastructure/backup` - Créer backup
+
+## 🎯 Fonctionnalités Détaillées
+
+### EPG (Electronic Program Guide)
+- Programme TV en temps réel
+- Recherche par titre/chaîne
+- Affichage 48h glissant
+- Intégration avec Cloud DVR
+
+### Cloud DVR
+- Programmation d'enregistrements
+- Gestion du stockage par utilisateur
+- Statuts : programmé, en cours, terminé, échoué
+- Limite de stockage configurable
+
+### Device Fingerprinting
+- Canvas, WebGL, Audio fingerprinting
+- Détection hardware (CPU, GPU, RAM)
+- Tracking des devices de confiance
+- Détection d'anomalies (IP change, multi-devices)
+
+### VPN Detection
+- Vérification IP databases
+- Analyse headers HTTP
+- Scoring de confiance (0-100)
+- Blacklist automatique
+
+### Contrôle Parental
+- PIN 4 chiffres
+- Profils enfants séparés
+- Restrictions par âge (G, PG, PG-13, R, NC-17, 18+)
+- Catégories bloquées
+- Limites de temps d'écran
+- Horaires autorisés
+
+## 🔧 Personnalisation
+
+### Ajouter un Film
+```javascript
+// Via l'interface admin ou API
+POST /api/admin/movies
+{
+  "title": "Film Title",
+  "description": "Description",
+  "genre": "Action",
+  "year": 2024,
+  "rating": "PG-13",
+  "videoUrl": "https://...",
+  "thumbnailUrl": "https://..."
+}
+```
+
+### Ajouter une Chaîne IPTV
+```javascript
+POST /api/admin/iptv
+{
+  "name": "Channel Name",
+  "url": "https://stream.m3u8",
+  "logo": "https://logo.png",
+  "category": "News",
+  "country": "FR"
+}
+```
+
+## 📈 Performance
+
+- **Build optimisé** : Code splitting, lazy loading
+- **Cache intelligent** : Service Worker, CDN ready
+- **Compression** : Gzip/Brotli activé
+- **Images** : Lazy loading, formats optimisés
+- **API** : Rate limiting, pagination
+
+## 🔒 Sécurité
+
+- **HTTPS** obligatoire en production
+- **Helmet.js** - Headers sécurisés
+- **CORS** strict avec whitelist
+- **JWT** avec expiration
+- **XSS/CSRF** protection
+- **Input sanitization** - Validation complète
+- **Rate limiting** - Anti-DDoS
+
+## 🐛 Dépannage
+
+### Le serveur ne démarre pas
 ```bash
 # Vérifier les logs
-pm2 logs lumixar-backend --lines 50
+pm2 logs lumixar-backend
 
 # Vérifier le port
 netstat -tulpn | grep 3001
@@ -254,69 +302,52 @@ netstat -tulpn | grep 3001
 pm2 restart lumixar-backend
 ```
 
-### Erreur 502 Bad Gateway
-```bash
-# Vérifier que le backend tourne
-pm2 status
+### Erreur CORS
+- Vérifier `CORS_ORIGIN` dans `.env`
+- Ajouter votre domaine dans `server/index.js` ligne 223
 
-# Redémarrer les services
-pm2 restart lumixar-backend
-systemctl restart nginx
+### Build échoue
+```bash
+# Nettoyer et réinstaller
+rm -rf node_modules package-lock.json
+npm install
+npm run build
 ```
 
-### Problèmes de permissions
-```bash
-# Réparer les permissions
-sudo chown -R $USER:$USER /var/www/lumixar
-sudo chmod -R 755 /var/www/lumixar
-```
+## 📚 Documentation
 
-📖 **Guide complet** : [DEPLOY.md](./DEPLOY.md)
-
----
+- **Fonctionnalités Avancées** : Voir le code source pour détails
+- **API** : Endpoints documentés ci-dessus
+- **Sécurité** : Voir `server/middleware/security.js`
 
 ## 🤝 Contribution
 
 Les contributions sont les bienvenues ! Pour contribuer :
 
-1. **Fork** le projet
-2. **Créer** une branche (`git checkout -b feature/AmazingFeature`)
-3. **Commit** vos changements (`git commit -m 'Add AmazingFeature'`)
-4. **Push** vers la branche (`git push origin feature/AmazingFeature`)
-5. **Ouvrir** une Pull Request
+1. Fork le projet
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+## 📝 License
+
+MIT License - voir [LICENSE](LICENSE)
+
+## 👨‍💻 Auteur
+
+**ed3352p**
+- GitHub: [@ed3352p](https://github.com/ed3352p)
+
+## 🙏 Remerciements
+
+- React & Vite pour le framework
+- Express.js pour le backend
+- FingerprintJS pour le device fingerprinting
+- Tous les contributeurs open source
 
 ---
 
-## 📝 Licence
+**Version 4.0** - Plateforme de streaming professionnelle complète avec fonctionnalités avancées
 
-Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
----
-
-## 📞 Support
-
-- **Documentation** : [DEPLOY.md](./DEPLOY.md) • [INSTALLATION.md](./INSTALLATION.md)
-- **Issues** : [GitHub Issues](https://github.com/ed3352p/streaming-app/issues)
-- **Email** : support@lumixar.online
-
----
-
-## 🌟 Remerciements
-
-- [React](https://reactjs.org/) - Framework UI
-- [Vite](https://vitejs.dev/) - Build tool
-- [TailwindCSS](https://tailwindcss.com/) - Framework CSS
-- [HLS.js](https://github.com/video-dev/hls.js/) - Lecteur HLS
-- [Lucide](https://lucide.dev/) - Icônes
-
----
-
-<div align="center">
-
-**Fait avec ❤️ et une touche de magie 🪄**
-
-⭐ **N'oubliez pas de mettre une étoile si ce projet vous plaît !** ⭐
-
-[⬆ Retour en haut](#-lumixar)
-
-</div>
+🌟 **Star ce projet si vous le trouvez utile !**

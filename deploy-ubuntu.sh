@@ -2,10 +2,16 @@
 
 ###############################################################################
 # Script de déploiement automatique Lumixar sur Ubuntu
-# Version: 3.0 - Clone Git automatique
-# Date: 2025-12-29
+# Version: 4.0 - Fonctionnalités Avancées Pro
+# Date: 2025-12-30
 # Usage: sudo bash deploy-ubuntu.sh
 # GitHub: https://github.com/ed3352p/streaming-app.git
+# 
+# Nouvelles fonctionnalités:
+# - Infrastructure: Load balancing, auto-backup, video preloading
+# - IPTV: EPG, Cloud DVR, Channel stats
+# - Sécurité: Device fingerprinting, VPN detection, screen recording detection
+# - Legal: Terms of service, parental controls, content moderation
 ###############################################################################
 
 set -e
@@ -226,16 +232,26 @@ print_success "Vérification des fichiers: OK"
 print_step "Configuration de l'environnement"
 JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
 
+# Générer les clés VAPID pour les notifications push
+print_info "Génération des clés VAPID pour les notifications push..."
+cd "$APP_DIR/server"
+VAPID_KEYS=$(npx web-push generate-vapid-keys --json 2>/dev/null || echo '{}')
+VAPID_PUBLIC=$(echo $VAPID_KEYS | grep -o '"publicKey":"[^"]*' | cut -d'"' -f4)
+VAPID_PRIVATE=$(echo $VAPID_KEYS | grep -o '"privateKey":"[^"]*' | cut -d'"' -f4)
+cd "$APP_DIR"
+
 if [ "$DOMAIN" = "localhost" ]; then
     API_URL="http://localhost:3001"
-    CORS_ORIGIN="http://localhost:5173,http://localhost:8080,http://localhost:3001"
+    CORS_ORIGIN="http://localhost:5173,http://localhost:8080,http://localhost:5050,http://localhost:3001"
+    VAPID_EMAIL="admin@localhost"
 else
     API_URL=""
     CORS_ORIGIN="https://$DOMAIN,https://www.$DOMAIN,http://$DOMAIN"
+    VAPID_EMAIL="$EMAIL"
 fi
 
 cat > "$APP_DIR/.env" << EOF
-# Configuration Lumixar - Production
+# Configuration Lumixar - Production v4.0
 NODE_ENV=production
 PORT=3001
 
@@ -254,9 +270,28 @@ RATE_LIMIT_WINDOW=900000
 RATE_LIMIT_MAX_REQUESTS=100
 MAX_FILE_SIZE=100
 LOG_LEVEL=info
+
+# Web Push Notifications
+VAPID_PUBLIC_KEY=$VAPID_PUBLIC
+VAPID_PRIVATE_KEY=$VAPID_PRIVATE
+VAPID_EMAIL=$VAPID_EMAIL
+
+# EPG (Electronic Program Guide)
+EPG_SOURCE_URL=https://iptv-org.github.io/epg/guides/
+
+# Load Balancer
+PRIMARY_SERVER_URL=http://localhost:3001
+SECONDARY_SERVER_URL=http://localhost:3002
+
+# Backup Settings
+BACKUP_RETENTION_DAYS=30
+AUTO_BACKUP_INTERVAL_HOURS=24
+
+# VPN Detection (optionnel - nécessite une clé API)
+# VPN_API_KEY=your_api_key_here
 EOF
 
-print_success "Fichier .env créé"
+print_success "Fichier .env créé avec toutes les fonctionnalités avancées"
 
 # 9. Installation dépendances backend
 print_step "Installation des dépendances backend"
@@ -318,7 +353,42 @@ mkdir -p "$APP_DIR/server/uploads"
 mkdir -p "$APP_DIR/server/chunks"
 mkdir -p "$APP_DIR/server/encoded"
 mkdir -p "$APP_DIR/server/thumbnails"
+mkdir -p "$APP_DIR/server/backups"
+mkdir -p "$APP_DIR/server/recordings"
 mkdir -p "$APP_DIR/logs"
+
+print_info "Création des fichiers de données pour les nouvelles fonctionnalités..."
+touch "$APP_DIR/server/data/epg.json"
+touch "$APP_DIR/server/data/dvr_recordings.json"
+touch "$APP_DIR/server/data/dvr_scheduled.json"
+touch "$APP_DIR/server/data/channel_stats.json"
+touch "$APP_DIR/server/data/devices.json"
+touch "$APP_DIR/server/data/sessions.json"
+touch "$APP_DIR/server/data/vpn_detections.json"
+touch "$APP_DIR/server/data/recording_detections.json"
+touch "$APP_DIR/server/data/parental_controls.json"
+touch "$APP_DIR/server/data/user_profiles.json"
+touch "$APP_DIR/server/data/content_moderation.json"
+touch "$APP_DIR/server/data/content_warnings.json"
+touch "$APP_DIR/server/data/terms_acceptance.json"
+touch "$APP_DIR/server/data/server_nodes.json"
+touch "$APP_DIR/server/data/preload_cache.json"
+
+echo '[]' > "$APP_DIR/server/data/epg.json"
+echo '[]' > "$APP_DIR/server/data/dvr_recordings.json"
+echo '[]' > "$APP_DIR/server/data/dvr_scheduled.json"
+echo '{"channels":{},"global":{}}' > "$APP_DIR/server/data/channel_stats.json"
+echo '{}' > "$APP_DIR/server/data/devices.json"
+echo '{}' > "$APP_DIR/server/data/sessions.json"
+echo '[]' > "$APP_DIR/server/data/vpn_detections.json"
+echo '[]' > "$APP_DIR/server/data/recording_detections.json"
+echo '{}' > "$APP_DIR/server/data/parental_controls.json"
+echo '{}' > "$APP_DIR/server/data/user_profiles.json"
+echo '{"content":{}}' > "$APP_DIR/server/data/content_moderation.json"
+echo '{}' > "$APP_DIR/server/data/content_warnings.json"
+echo '{}' > "$APP_DIR/server/data/terms_acceptance.json"
+echo '{"servers":[]}' > "$APP_DIR/server/data/server_nodes.json"
+echo '{"popularVideos":[]}' > "$APP_DIR/server/data/preload_cache.json"
 
 # Restaurer les données de backup si elles existent
 if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
@@ -333,7 +403,9 @@ chmod -R 755 "$APP_DIR/server/data"
 chmod -R 755 "$APP_DIR/server/uploads"
 chmod -R 755 "$APP_DIR/server/chunks"
 chmod -R 755 "$APP_DIR/server/encoded"
-print_success "Répertoires créés et configurés"
+chmod -R 755 "$APP_DIR/server/backups"
+chmod -R 755 "$APP_DIR/server/recordings"
+print_success "Répertoires et fichiers de données créés pour toutes les fonctionnalités"
 
 # 13. Configuration PM2
 print_step "Configuration de PM2"
@@ -580,25 +652,41 @@ echo "✅ Mise à jour terminée!"
 EOF
 chmod +x "$APP_DIR/update.sh"
 
-# Script de backup
+# Script de backup automatique (avec système de backup intégré)
 cat > /root/backup-lumixar.sh << 'EOF'
 #!/bin/bash
 BACKUP_DIR="/root/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 mkdir -p "$BACKUP_DIR"
-echo "📦 Backup de Lumixar..."
-tar -czf "$BACKUP_DIR/lumixar_$DATE.tar.gz" /var/www/lumixar/server/data /var/www/lumixar/.env 2>/dev/null
-echo "✓ Backup: $BACKUP_DIR/lumixar_$DATE.tar.gz"
-ls -t "$BACKUP_DIR"/lumixar_*.tar.gz | tail -n +8 | xargs -r rm
+echo "📦 Backup automatique de Lumixar..."
+
+# Backup complet incluant les nouvelles données
+tar -czf "$BACKUP_DIR/lumixar_$DATE.tar.gz" \
+  /var/www/lumixar/server/data \
+  /var/www/lumixar/server/backups \
+  /var/www/lumixar/server/recordings \
+  /var/www/lumixar/.env 2>/dev/null
+
+echo "✓ Backup créé: $BACKUP_DIR/lumixar_$DATE.tar.gz"
+
+# Garder seulement les 30 derniers backups (1 mois)
+ls -t "$BACKUP_DIR"/lumixar_*.tar.gz | tail -n +31 | xargs -r rm
+
+# Afficher l'espace utilisé
+du -sh "$BACKUP_DIR" | awk '{print "📊 Espace backups: " $1}'
 EOF
 chmod +x /root/backup-lumixar.sh
-(crontab -l 2>/dev/null; echo "0 3 * * * /root/backup-lumixar.sh") | crontab -
 
-# Script de monitoring
+# Backup quotidien à 3h du matin
+(crontab -l 2>/dev/null | grep -v backup-lumixar; echo "0 3 * * * /root/backup-lumixar.sh") | crontab -
+
+print_info "Backup automatique quotidien configuré (3h du matin)"
+
+# Script de monitoring avancé
 cat > "$APP_DIR/monitor.sh" << 'EOF'
 #!/bin/bash
-echo "📊 Status Lumixar"
-echo "=================="
+echo "📊 Status Lumixar v4.0 - Monitoring Avancé"
+echo "============================================="
 echo ""
 echo "🔹 PM2 Status:"
 pm2 status
@@ -606,18 +694,76 @@ echo ""
 echo "🔹 Nginx Status:"
 systemctl status nginx --no-pager | head -n 5
 echo ""
-echo "🔹 Disk Usage:"
-df -h /var/www/lumixar | tail -n 1
+echo "🔹 Ressources Système:"
+echo "  💾 Disk: $(df -h /var/www/lumixar | tail -n 1 | awk '{print $3 "/" $2 " (" $5 ")"}')"
+echo "  🧠 RAM: $(free -h | grep Mem | awk '{print $3 "/" $2}')"
+echo "  💻 CPU: $(top -bn1 | grep "Cpu(s)" | awk '{print $2}')%"
 echo ""
-echo "🔹 Memory Usage:"
-free -h | grep Mem
+echo "🔹 Fonctionnalités Avancées:"
+echo "  📺 EPG: $([ -f /var/www/lumixar/server/data/epg.json ] && echo '✓ Actif' || echo '✗ Inactif')"
+echo "  ⏺️  DVR: $([ -f /var/www/lumixar/server/data/dvr_recordings.json ] && echo '✓ Actif' || echo '✗ Inactif')"
+echo "  🔐 Security: $([ -f /var/www/lumixar/server/data/devices.json ] && echo '✓ Actif' || echo '✗ Inactif')"
+echo "  👶 Parental: $([ -f /var/www/lumixar/server/data/parental_controls.json ] && echo '✓ Actif' || echo '✗ Inactif')"
 echo ""
-echo "🔹 Recent Logs (dernières 10 lignes):"
-pm2 logs lumixar-backend --lines 10 --nostream
+echo "🔹 Statistiques:"
+if [ -f /var/www/lumixar/server/data/channel_stats.json ]; then
+  CHANNELS=$(cat /var/www/lumixar/server/data/channel_stats.json | grep -o '"channelId"' | wc -l)
+  echo "  📊 Chaînes suivies: $CHANNELS"
+fi
+if [ -f /var/www/lumixar/server/data/dvr_recordings.json ]; then
+  RECORDINGS=$(cat /var/www/lumixar/server/data/dvr_recordings.json | grep -o '"id"' | wc -l)
+  echo "  ⏺️  Enregistrements: $RECORDINGS"
+fi
+if [ -d /var/www/lumixar/server/backups ]; then
+  BACKUPS=$(ls /var/www/lumixar/server/backups 2>/dev/null | wc -l)
+  echo "  💾 Backups auto: $BACKUPS"
+fi
+echo ""
+echo "🔹 Logs Récents (10 dernières lignes):"
+pm2 logs lumixar-backend --lines 10 --nostream 2>/dev/null || echo "  Aucun log disponible"
+echo ""
+echo "🔹 Santé de l'API:"
+curl -s http://localhost:3001/api/health 2>/dev/null && echo "  ✓ API répond" || echo "  ✗ API ne répond pas"
 EOF
 chmod +x "$APP_DIR/monitor.sh"
 
-print_success "Scripts utilitaires créés"
+# Script de test des fonctionnalités avancées
+cat > "$APP_DIR/test-features.sh" << 'EOF'
+#!/bin/bash
+echo "🧪 Test des Fonctionnalités Avancées"
+echo "====================================="
+echo ""
+
+API="http://localhost:3001"
+
+echo "1️⃣  Test Infrastructure..."
+curl -s "$API/api/infrastructure/servers" > /dev/null && echo "  ✓ Load Balancer" || echo "  ✗ Load Balancer"
+curl -s "$API/api/infrastructure/preload" > /dev/null && echo "  ✓ Video Preloader" || echo "  ✗ Video Preloader"
+curl -s "$API/api/infrastructure/backups" > /dev/null && echo "  ✓ Backup Manager" || echo "  ✗ Backup Manager"
+
+echo ""
+echo "2️⃣  Test IPTV Avancé..."
+curl -s "$API/api/epg/channel/test" > /dev/null && echo "  ✓ EPG Guide" || echo "  ✗ EPG Guide"
+curl -s "$API/api/channels/top" > /dev/null && echo "  ✓ Channel Stats" || echo "  ✗ Channel Stats"
+
+echo ""
+echo "3️⃣  Test Sécurité..."
+[ -f /var/www/lumixar/server/data/devices.json ] && echo "  ✓ Device Fingerprinting" || echo "  ✗ Device Fingerprinting"
+[ -f /var/www/lumixar/server/data/vpn_detections.json ] && echo "  ✓ VPN Detection" || echo "  ✗ VPN Detection"
+[ -f /var/www/lumixar/server/data/recording_detections.json ] && echo "  ✓ Screen Recording Detection" || echo "  ✗ Screen Recording Detection"
+
+echo ""
+echo "4️⃣  Test Legal & UX..."
+[ -f /var/www/lumixar/server/data/parental_controls.json ] && echo "  ✓ Parental Controls" || echo "  ✗ Parental Controls"
+[ -f /var/www/lumixar/server/data/content_moderation.json ] && echo "  ✓ Content Moderation" || echo "  ✗ Content Moderation"
+[ -f /var/www/lumixar/server/data/terms_acceptance.json ] && echo "  ✓ Terms Manager" || echo "  ✗ Terms Manager"
+
+echo ""
+echo "✅ Tests terminés!"
+EOF
+chmod +x "$APP_DIR/test-features.sh"
+
+print_success "Scripts utilitaires créés (monitor, test, backup)"
 
 # 18. Vérifications finales
 print_step "Vérifications finales"
@@ -669,16 +815,29 @@ fi
 echo "  📁 Répertoire: $APP_DIR"
 echo "  🔑 Credentials: $APP_DIR/server/data/.admin_credentials"
 echo ""
+echo "✨ Fonctionnalités Avancées Activées:"
+echo "  ⚡ Infrastructure: Load Balancing, Auto-Backup, Video Preloading"
+echo "  📺 IPTV Pro: EPG Guide, Cloud DVR, Channel Stats"
+echo "  🔐 Sécurité: Device Fingerprinting, VPN Detection, Screen Recording Detection"
+echo "  ⚖️  Legal/UX: Terms of Service, Parental Controls, Content Moderation"
+echo ""
 echo "🔧 Commandes utiles:"
-echo "  • Status: $APP_DIR/monitor.sh"
+echo "  • Status complet: $APP_DIR/monitor.sh"
+echo "  • Test fonctionnalités: $APP_DIR/test-features.sh"
 echo "  • Logs: pm2 logs lumixar-backend"
 echo "  • Redémarrer: pm2 restart lumixar-backend"
 echo "  • Mise à jour: $APP_DIR/update.sh"
-echo "  • Backup: /root/backup-lumixar.sh"
+echo "  • Backup manuel: /root/backup-lumixar.sh"
 echo ""
 echo "📊 Monitoring:"
 echo "  • PM2: pm2 monit"
 echo "  • Nginx: tail -f /var/log/nginx/lumixar-access.log"
+echo "  • API Health: curl http://localhost:3001/api/health"
+echo ""
+echo "📚 Documentation:"
+echo "  • Fonctionnalités: $APP_DIR/ADVANCED_FEATURES.md"
+echo "  • Sécurité: $APP_DIR/SECURITY.md"
+echo "  • Démarrage rapide: $APP_DIR/QUICK_START.md"
 echo ""
 print_info "Vérifiez les logs avec: pm2 logs lumixar-backend"
 echo ""

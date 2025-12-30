@@ -8,11 +8,12 @@ export const NativeBanner = memo(function NativeBanner({ position = 'in-feed', i
   // Premium et Admin: AUCUNE pub
   const isPremiumOrAdmin = user?.premium === true || user?.role === 'admin';
   
-  // Vérifier si les pubs native sont activées
+  // Vérifier si les pubs sont activées globalement et si les pubs native sont activées
   const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+  const adsEnabled = adsSettings.enabled !== false;
   const nativeAdsEnabled = adsSettings.nativeAds !== false;
   
-  if (isPremiumOrAdmin || !nativeAdsEnabled) {
+  if (isPremiumOrAdmin || !adsEnabled || !nativeAdsEnabled) {
     return null;
   }
 

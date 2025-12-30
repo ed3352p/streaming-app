@@ -9,7 +9,11 @@ export function LeaderboardBanner({ position = 'in-feed' }) {
   // Premium et Admin: AUCUNE pub
   const isPremiumOrAdmin = user?.premium === true || user?.role === 'admin';
   
-  if (isPremiumOrAdmin) {
+  // Vérifier si les pubs sont activées globalement
+  const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+  const adsEnabled = adsSettings.enabled !== false;
+  
+  if (isPremiumOrAdmin || !adsEnabled) {
     return null;
   }
 

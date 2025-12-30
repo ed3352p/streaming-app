@@ -589,6 +589,113 @@ class ApiService {
       body: JSON.stringify({ url }),
     });
   }
+
+  // ============ NOTIFICATIONS ============
+  async subscribeToNotifications(userId, subscription) {
+    return this.request('/api/notifications/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ userId, subscription }),
+    });
+  }
+
+  async getNotifications(userId) {
+    return this.request(`/api/notifications/${userId}`);
+  }
+
+  async markNotificationAsRead(notificationId, userId) {
+    return this.request(`/api/notifications/${notificationId}/read`, {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    });
+  }
+
+  // ============ RECOMMENDATIONS ============
+  async getRecommendations(params) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/api/recommendations?${queryString}`);
+  }
+
+  // ============ RATINGS ============
+  async rateContent(contentId, contentType, rating) {
+    return this.request('/api/ratings', {
+      method: 'POST',
+      body: JSON.stringify({ userId: this.getUserId(), contentId, contentType, rating }),
+    });
+  }
+
+  async getContentRatings(contentId, contentType) {
+    return this.request(`/api/ratings/${contentId}?contentType=${contentType}`);
+  }
+
+  // ============ COMMENTS ============
+  async getComments(contentId, contentType) {
+    return this.request(`/api/comments/${contentId}?contentType=${contentType}`);
+  }
+
+  async addComment(contentId, contentType, text) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return this.request('/api/comments', {
+      method: 'POST',
+      body: JSON.stringify({ userId: user.id, username: user.username, contentId, contentType, text }),
+    });
+  }
+
+  async likeComment(commentId) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return this.request(`/api/comments/${commentId}/like`, {
+      method: 'POST',
+      body: JSON.stringify({ userId: user.id }),
+    });
+  }
+
+  async deleteComment(commentId) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return this.request(`/api/comments/${commentId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ userId: user.id }),
+    });
+  }
+
+  async reportComment(commentId) {
+    return this.request(`/api/comments/${commentId}/report`, {
+      method: 'POST',
+    });
+  }
+
+  // ============ REFERRALS ============
+  async getReferralCode(userId) {
+    return this.request(`/api/referrals/code/${userId}`);
+  }
+
+  async getReferrals() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return this.request(`/api/referrals/${user.id}`);
+  }
+
+  async getReferralStats(userId) {
+    return this.request(`/api/referrals/${userId}/stats`);
+  }
+
+  // ============ BADGES ============
+  async getUserBadges() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return this.request(`/api/badges/${user.id}`);
+  }
+
+  async getBadgeProgress(userId) {
+    return this.request(`/api/badges/${userId}/progress`);
+  }
+
+  // ============ USER STATS ============
+  async getUserStats() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return this.request(`/api/stats/${user.id}`);
+  }
+
+  getUserId() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    return user.id;
+  }
 }
 
 export const api = new ApiService();

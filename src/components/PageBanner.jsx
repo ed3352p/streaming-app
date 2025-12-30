@@ -1,8 +1,21 @@
 import { useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export default function PageBanner({ containerId = 'page-banner-ad' }) {
+  const { user } = useAuth();
   const containerRef = useRef(null);
   const scriptLoadedRef = useRef(false);
+
+  // Premium et Admin: AUCUNE pub
+  const isPremiumOrAdmin = user?.premium === true || user?.role === 'admin';
+  
+  // Vérifier si les pubs sont activées globalement
+  const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+  const adsEnabled = adsSettings.enabled !== false;
+  
+  if (isPremiumOrAdmin || !adsEnabled) {
+    return null;
+  }
 
   useEffect(() => {
     const container = document.getElementById(containerId);

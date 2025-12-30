@@ -10,11 +10,12 @@ export function PopunderAd() {
   // Premium et Admin: AUCUNE pub
   const isPremiumOrAdmin = user?.premium === true || user?.role === 'admin';
   
-  // Vérifier si le popunder est activé
+  // Vérifier si les pubs sont activées globalement et si le popunder est activé
   const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+  const adsEnabled = adsSettings.enabled !== false;
   const popunderEnabled = adsSettings.popunder !== false;
   
-  if (isPremiumOrAdmin || !popunderEnabled) {
+  if (isPremiumOrAdmin || !adsEnabled || !popunderEnabled) {
     return null;
   }
 

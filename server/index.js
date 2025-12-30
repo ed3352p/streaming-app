@@ -70,6 +70,9 @@ import {
   getAdblockStats
 } from './middleware/adblockDetection.js';
 import { printValidationResults, getSecureConfig } from './utils/envValidator.js';
+import advancedRoutes from './routes/advanced.js';
+import { initializeCronJobs } from './utils/cron.js';
+import { generateSitemap } from './utils/seo.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -217,7 +220,7 @@ app.use(helmet({
 // CORS with strict origin control
 const allowedOrigins = process.env.NODE_ENV === 'production'
   ? ['https://lumixar.online', 'https://min-stream.click']
-  : ['https://lumixar.online', 'http://lumixar.online', 'https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080'];
+  : ['https://lumixar.online', 'http://lumixar.online', 'https://min-stream.click', 'http://min-stream.click', 'http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://localhost:8080', 'http://localhost:5050'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -1943,6 +1946,21 @@ app.post('/api/access-code/redeem', authenticateToken, (req, res) => {
   }
 });
 
+// ============ ADVANCED FEATURES ROUTES ============
+app.use('/api', advancedRoutes);
+
+// ============ SEO ROUTES ============
+app.get('/sitemap.xml', (req, res) => {
+  try {
+    const sitemap = generateSitemap();
+    res.header('Content-Type', 'application/xml');
+    res.send(sitemap);
+  } catch (error) {
+    console.error('Sitemap generation error:', error);
+    res.status(500).send('Error generating sitemap');
+  }
+});
+
 // ============ SCRAPER ROUTE ============
 app.post('/api/scrape', authenticateToken, requireAdmin, async (req, res) => {
   try {
@@ -2022,10 +2040,14 @@ if (process.env.NODE_ENV === 'production') {
 async function start() {
   await initDefaultUsers();
   
+  // Initialize cron jobs
+  initializeCronJobs();
+  
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📁 Data directory: ${DATA_DIR}`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`⏰ Cron jobs initialized`);
   });
 }
 

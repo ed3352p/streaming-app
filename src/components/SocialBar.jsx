@@ -10,11 +10,12 @@ export function SocialBar() {
   // Premium et Admin: AUCUNE pub
   const isPremiumOrAdmin = user?.premium === true || user?.role === 'admin';
   
-  // Vérifier si la social bar est activée
+  // Vérifier si les pubs sont activées globalement et si la social bar est activée
   const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+  const adsEnabled = adsSettings.enabled !== false;
   const socialBarEnabled = adsSettings.socialBar !== false;
   
-  if (isPremiumOrAdmin || !socialBarEnabled) {
+  if (isPremiumOrAdmin || !adsEnabled || !socialBarEnabled) {
     return null;
   }
 

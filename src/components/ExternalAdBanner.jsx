@@ -12,11 +12,12 @@ export const ExternalAdBanner = memo(function ExternalAdBanner({ position = 'top
   // Premium et Admin: AUCUNE pub
   const isPremiumOrAdmin = user?.premium === true || user?.role === 'admin';
   
-  // Vérifier si les pubs header sont activées
+  // Vérifier si les pubs sont activées globalement et si les pubs header sont activées
   const adsSettings = JSON.parse(localStorage.getItem('lumixar_ads_settings') || '{}');
+  const adsEnabled = adsSettings.enabled !== false;
   const headerAdsEnabled = adsSettings.headerAds !== false;
   
-  if (isPremiumOrAdmin || !headerAdsEnabled) {
+  if (isPremiumOrAdmin || !adsEnabled || !headerAdsEnabled) {
     return null;
   }
 

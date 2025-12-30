@@ -1,6 +1,8 @@
-import React, { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PasswordChangeGuard from "./components/PasswordChangeGuard";
 import NavbarComponent from "./components/NavbarComponent";
@@ -9,6 +11,7 @@ import { SocialBar } from "./components/SocialBar";
 import AdBlockVerifier from "./components/AdBlockVerifier";
 import MobileOptimizer from "./components/MobileOptimizer";
 import "./styles/main.css";
+import "./i18n/config";
 
 // Lazy loading des pages
 const Home = lazy(() => import("./pages/Home"));
@@ -39,6 +42,7 @@ const AccessCodes = lazy(() => import("./pages/admin/AccessCodes"));
 const RedeemCode = lazy(() => import("./pages/RedeemCode"));
 const BulkScraper = lazy(() => import("./pages/admin/BulkScraper"));
 const ManageMovies = lazy(() => import("./pages/admin/ManageMovies"));
+const Profile = lazy(() => import("./pages/Profile"));
 
 // Loading fallback
 function LoadingFallback() {
@@ -67,19 +71,30 @@ function LoadingFallback() {
 export default function App() {
   const [adBlockVerified, setAdBlockVerified] = useState(false);
 
+  useEffect(() => {
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => console.log('SW registered:', registration))
+        .catch(error => console.log('SW registration failed:', error));
+    }
+  }, []);
+
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <PasswordChangeGuard>
-          <MobileOptimizer />
-          <AdBlockVerifier 
-            onVerified={() => setAdBlockVerified(true)}
-            onBlocked={() => setAdBlockVerified(false)}
-          />
-          <SocialBar />
-          <NavbarComponent />
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <BrowserRouter>
+            <PasswordChangeGuard>
+              <MobileOptimizer />
+              <AdBlockVerifier 
+                onVerified={() => setAdBlockVerified(true)}
+                onBlocked={() => setAdBlockVerified(false)}
+              />
+              <SocialBar />
+              <NavbarComponent />
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
               {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/films" element={<Films />} />
@@ -93,6 +108,7 @@ export default function App() {
               <Route path="/payment/:paymentId" element={<Payment />} />
               <Route path="/payment/success" element={<PaymentSuccess />} />
               <Route path="/redeem-code" element={<ProtectedRoute><RedeemCode /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
               {/* Player route */}
               <Route path="/player/:id" element={<Player />} />
@@ -119,6 +135,8 @@ export default function App() {
           <Footer />
         </PasswordChangeGuard>
       </BrowserRouter>
-    </AuthProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
