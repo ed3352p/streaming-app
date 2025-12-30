@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Play, Tv, CreditCard, User, LogOut, Shield, Sparkles, Film, Menu, X, Key } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import '../styles/navbar-mobile.css';
 
 export default function NavbarComponent() {
   const { user, logout, isAdmin, isPremium } = useAuth();
@@ -104,18 +105,25 @@ export default function NavbarComponent() {
         <button
           onClick={toggleMobileMenu}
           className="mobile-menu-btn"
+          aria-label="Menu de navigation"
+          aria-expanded={mobileMenuOpen}
           style={{
             display: 'none',
-            background: 'transparent',
-            border: 'none',
+            background: mobileMenuOpen ? 'rgba(239, 68, 68, 0.1)' : 'transparent',
+            border: '1px solid',
+            borderColor: mobileMenuOpen ? 'rgba(239, 68, 68, 0.3)' : 'transparent',
             color: 'white',
             cursor: 'pointer',
-            padding: '8px',
-            borderRadius: '8px',
-            transition: 'all 0.3s ease'
+            padding: '10px',
+            borderRadius: '10px',
+            transition: 'all 0.3s ease',
+            minHeight: '44px',
+            minWidth: '44px',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
-          {mobileMenuOpen ? <X style={{width: '28px', height: '28px'}} /> : <Menu style={{width: '28px', height: '28px'}} />}
+          {mobileMenuOpen ? <X style={{width: '24px', height: '24px'}} /> : <Menu style={{width: '24px', height: '24px'}} />}
         </button>
 
         {/* Navigation */}
@@ -281,9 +289,10 @@ export default function NavbarComponent() {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(4px)',
           zIndex: 98,
-          display: 'none'
+          animation: 'fadeIn 0.3s ease'
         }}
         onClick={() => setMobileMenuOpen(false)}
       />
@@ -294,21 +303,23 @@ export default function NavbarComponent() {
       className="mobile-menu"
       style={{
         position: 'fixed',
-        top: '70px',
+        top: scrolled ? '64px' : '70px',
         left: 0,
         right: 0,
         background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98))',
         backdropFilter: 'blur(20px)',
-        padding: '20px',
+        padding: '16px',
+        paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
         zIndex: 99,
-        display: 'none',
+        display: mobileMenuOpen ? 'flex' : 'none',
         flexDirection: 'column',
         gap: '8px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-        transform: mobileMenuOpen ? 'translateY(0)' : 'translateY(-100%)',
-        opacity: mobileMenuOpen ? 1 : 0,
-        transition: 'all 0.3s ease'
+        maxHeight: 'calc(100vh - 70px)',
+        overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
+        animation: mobileMenuOpen ? 'slideDown 0.3s ease' : 'none'
       }}
     >
       <MobileNavLink href="/" icon={Play} label="Accueil" active={isActive('/')} onClick={() => setMobileMenuOpen(false)} />
@@ -486,6 +497,7 @@ const MobileNavLink = memo(function MobileNavLink({ href, icon: Icon, label, act
         fontSize: '16px',
         fontWeight: '600',
         transition: 'all 0.3s ease',
+        minHeight: '52px',
         background: active 
           ? premium 
             ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(109, 40, 217, 0.2))'
@@ -503,7 +515,7 @@ const MobileNavLink = memo(function MobileNavLink({ href, icon: Icon, label, act
         color: active ? 'white' : '#cbd5e1'
       }}
     >
-      <Icon style={{width: '22px', height: '22px'}} />
+      <Icon style={{width: '22px', height: '22px', flexShrink: 0}} />
       {label}
     </a>
   );

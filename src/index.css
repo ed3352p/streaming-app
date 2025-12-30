@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/mobile-utilities.css";
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
@@ -155,4 +156,206 @@ input[type="search"]:focus {
 
 input::placeholder {
   color: rgba(255, 255, 255, 0.4);
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES - OPTIMIZED
+   ============================================ */
+
+/* Container responsive */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+}
+
+/* Touch-friendly buttons */
+@media (hover: none) and (pointer: coarse) {
+  button, .btn, a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Improved scrolling on mobile */
+body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Prevent text selection on interactive elements */
+button, .btn, .movie-card-poster {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Mobile grid optimizations */
+@media (max-width: 1024px) {
+  .movies-grid, .series-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .movies-grid, .series-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .movies-grid, .series-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+}
+
+/* Mobile typography */
+@media (max-width: 768px) {
+  h1 {
+    font-size: clamp(28px, 6vw, 42px) !important;
+  }
+  
+  h2 {
+    font-size: clamp(24px, 5vw, 36px) !important;
+  }
+  
+  h3 {
+    font-size: clamp(18px, 4vw, 24px) !important;
+  }
+  
+  p {
+    font-size: clamp(14px, 3vw, 16px) !important;
+  }
+}
+
+/* Mobile spacing */
+@media (max-width: 768px) {
+  section, .section {
+    margin-bottom: 40px !important;
+  }
+  
+  .hero-section {
+    padding: 40px 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  section, .section {
+    margin-bottom: 30px !important;
+  }
+  
+  .hero-section {
+    padding: 30px 0 !important;
+  }
+}
+
+/* Mobile-friendly forms */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
+    padding: 12px 16px !important;
+  }
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile modal improvements */
+@media (max-width: 768px) {
+  .modal, [role="dialog"] {
+    margin: 0 !important;
+    max-width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .navbar-main {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 896px) and (orientation: landscape) {
+  .hero-section {
+    min-height: auto !important;
+    padding: 20px 0 !important;
+  }
+  
+  .hero-cards {
+    display: none !important;
+  }
+}
+
+/* Accessibility - Focus visible */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s ease-in-out infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Smooth scroll behavior */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

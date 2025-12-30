@@ -8,6 +8,7 @@ import Footer from "./components/Footer";
 import { PopunderAd } from "./components/PopunderAd";
 import { SocialBar } from "./components/SocialBar";
 import AdBlockVerifier from "./components/AdBlockVerifier";
+import MobileOptimizer from "./components/MobileOptimizer";
 import "./styles/main.css";
 
 // Lazy loading des pages
@@ -71,6 +72,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <PasswordChangeGuard>
+          <MobileOptimizer />
           <AdBlockVerifier 
             onVerified={() => setAdBlockVerified(true)}
             onBlocked={() => setAdBlockVerified(false)}

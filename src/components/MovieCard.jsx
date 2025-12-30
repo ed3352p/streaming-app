@@ -1,4 +1,5 @@
 import { useState, memo } from 'react';
+import '../styles/movie-card-mobile.css';
 
 const MovieCard = memo(function MovieCard({ title, rating = 4.5, id = 1, imageUrl, genre, year, description }) {
   const [isHovered, setIsHovered] = useState(false);
@@ -21,6 +22,7 @@ const MovieCard = memo(function MovieCard({ title, rating = 4.5, id = 1, imageUr
       className="movie-card-poster"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={() => setIsHovered(true)}
       onClick={handleDetails}
       style={{
         position: 'relative',
@@ -31,7 +33,9 @@ const MovieCard = memo(function MovieCard({ title, rating = 4.5, id = 1, imageUr
         background: '#0f172a',
         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
         transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-        boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.3)'
+        boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.3)',
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation'
       }}
     >
       {imageUrl && !imageError ? (
@@ -84,17 +88,18 @@ const MovieCard = memo(function MovieCard({ title, rating = 4.5, id = 1, imageUr
         </div>
       )}
       
-      {/* Overlay avec infos au hover */}
+      {/* Overlay avec infos au hover/touch */}
       <div style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
         background: 'linear-gradient(transparent, rgba(0,0,0,0.95))',
-        padding: '60px 15px 15px',
+        padding: '60px 12px 12px',
         transform: isHovered ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.3s ease',
-        opacity: isHovered ? 1 : 0
+        opacity: isHovered ? 1 : 0,
+        pointerEvents: isHovered ? 'auto' : 'none'
       }}>
         <h3 style={{
           fontSize: '16px',

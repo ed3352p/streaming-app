@@ -136,15 +136,16 @@ export default function Home() {
               }}>
                 Accédez à des milliers de films, séries et chaînes IPTV en direct. Qualité HD/4K, sans publicité avec Premium.
               </p>
-              <div style={{display: 'flex', gap: '16px', flexWrap: 'wrap'}}>
+              <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center'}}>
                 <a href="/films" className="btn" style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '10px',
                   fontSize: '16px',
-                  padding: '16px 36px'
+                  padding: '16px 36px',
+                  minHeight: '52px'
                 }}>
-                  <Play style={{width: '22px', height: '22px'}} />
+                  <Play style={{width: '20px', height: '20px'}} />
                   Commencer à regarder
                 </a>
                 <a href="/subscribe" className="btn" style={{
@@ -153,11 +154,12 @@ export default function Home() {
                   gap: '10px',
                   fontSize: '16px',
                   padding: '16px 36px',
+                  minHeight: '52px',
                   background: 'rgba(15, 23, 42, 0.6)',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(148, 163, 184, 0.2)'
                 }}>
-                  <Star style={{width: '22px', height: '22px'}} />
+                  <Star style={{width: '20px', height: '20px'}} />
                   Découvrir Premium
                 </a>
               </div>
@@ -204,23 +206,53 @@ export default function Home() {
           50% { transform: translateY(-20px); }
         }
         
+        /* Tablet */
+        @media (max-width: 1024px) {
+          .hero-section {
+            min-height: 500px !important;
+          }
+          
+          .hero-grid {
+            gap: 40px !important;
+          }
+        }
+        
+        /* Mobile */
         @media (max-width: 768px) {
           .hero-section {
             min-height: auto !important;
             padding: 40px 0 !important;
           }
+          
           .hero-grid {
             grid-template-columns: 1fr !important;
             gap: 30px !important;
           }
+          
           .hero-cards {
             display: none !important;
           }
+          
           .hero-title {
             text-align: center;
+            font-size: clamp(32px, 8vw, 48px) !important;
           }
+          
           .hero-desc {
             text-align: center;
+            font-size: 16px !important;
+          }
+          
+          .hero-section > div > div > div:first-child {
+            text-align: center;
+          }
+          
+          .hero-section > div > div > div:first-child > div:first-child {
+            justify-content: center;
+          }
+          
+          .hero-section > div > div > div:first-child > div:last-child {
+            justify-content: center;
           }
           
           /* Catégories mobile */
@@ -229,10 +261,15 @@ export default function Home() {
             gap: 16px !important;
           }
           
+          .categories-grid a {
+            padding: 32px 24px !important;
+          }
+          
           /* Boutons mobile */
           .btn {
             font-size: 14px !important;
             padding: 14px 28px !important;
+            justify-content: center !important;
           }
           
           /* Premium section mobile */
@@ -245,11 +282,28 @@ export default function Home() {
             grid-template-columns: 1fr !important;
             gap: 16px !important;
           }
+          
+          /* Films grid mobile */
+          .movies-grid-home {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+            gap: 16px !important;
+          }
         }
         
+        /* Small mobile */
         @media (max-width: 480px) {
           .hero-section {
             padding: 30px 0 !important;
+          }
+          
+          .hero-title {
+            font-size: clamp(28px, 7vw, 36px) !important;
+            letter-spacing: -1px !important;
+          }
+          
+          .hero-desc {
+            font-size: 14px !important;
+            padding: 0 8px !important;
           }
           
           .container {
@@ -261,10 +315,18 @@ export default function Home() {
             gap: 12px !important;
           }
           
+          .categories-grid a {
+            padding: 24px 20px !important;
+          }
+          
+          .categories-grid h3 {
+            font-size: 22px !important;
+          }
+          
           /* Boutons très petit mobile */
           .btn {
-            font-size: 13px !important;
-            padding: 12px 24px !important;
+            font-size: 14px !important;
+            padding: 14px 24px !important;
             width: 100% !important;
           }
           
@@ -275,8 +337,34 @@ export default function Home() {
             border-radius: 16px !important;
           }
           
+          .premium-section h2 {
+            font-size: clamp(24px, 6vw, 36px) !important;
+          }
+          
           .btn-premium {
             width: 100% !important;
+          }
+          
+          /* Films grid small mobile */
+          .movies-grid-home {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 12px !important;
+          }
+        }
+        
+        /* Landscape mobile */
+        @media (max-width: 896px) and (orientation: landscape) {
+          .hero-section {
+            min-height: auto !important;
+            padding: 20px 0 !important;
+          }
+          
+          .hero-title {
+            font-size: 32px !important;
+          }
+          
+          .hero-desc {
+            font-size: 14px !important;
           }
         }
       `}</style>
@@ -386,10 +474,10 @@ export default function Home() {
               </a>
             </div>
 
-            <div style={{
+            <div className="movies-grid-home" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-              gap: '25px',
+              gap: '20px',
               contentVisibility: 'auto',
               containIntrinsicSize: '0 500px'
             }}>
@@ -476,9 +564,11 @@ export default function Home() {
                 padding: '18px 40px',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '10px'
+                justifyContent: 'center',
+                gap: '10px',
+                minHeight: '56px'
               }}>
-                <Star style={{width: '22px', height: '22px'}} />
+                <Star style={{width: '20px', height: '20px'}} />
                 Découvrir les offres
               </a>
             </div>

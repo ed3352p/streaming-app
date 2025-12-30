@@ -1,0 +1,113 @@
+/* ============================================
+   NAVBAR MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Desktop - Hide mobile elements */
+@media (min-width: 769px) {
+  .mobile-menu-btn {
+    display: none !important;
+  }
+  
+  .mobile-menu {
+    display: none !important;
+  }
+  
+  .mobile-menu-overlay {
+    display: none !important;
+  }
+}
+
+/* Tablet and Mobile - Show mobile menu */
+@media (max-width: 768px) {
+  /* Hide desktop nav links */
+  .nav-links {
+    display: none !important;
+  }
+  
+  /* Show mobile menu button */
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  
+  /* Navbar adjustments */
+  .navbar-main {
+    padding: 12px 16px !important;
+  }
+  
+  /* Logo size on mobile */
+  .navbar-main img[alt="Lumixar Logo"] {
+    height: 40px !important;
+  }
+  
+  /* Nav link labels - hide on small screens */
+  @media (max-width: 640px) {
+    .nav-link-label {
+      display: none;
+    }
+    
+    .nav-link-item {
+      padding: 10px !important;
+    }
+  }
+}
+
+/* Small mobile optimizations */
+@media (max-width: 480px) {
+  .navbar-main {
+    padding: 10px 12px !important;
+  }
+  
+  .navbar-main img[alt="Lumixar Logo"] {
+    height: 36px !important;
+  }
+  
+  .mobile-menu {
+    padding: 12px !important;
+  }
+  
+  .mobile-menu a,
+  .mobile-menu button {
+    font-size: 15px !important;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  .mobile-menu {
+    max-height: calc(100vh - 60px) !important;
+  }
+}
+
+/* Touch improvements for mobile menu */
+@media (hover: none) and (pointer: coarse) {
+  .mobile-menu a,
+  .mobile-menu button {
+    min-height: 48px;
+  }
+  
+  .mobile-menu-btn {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
