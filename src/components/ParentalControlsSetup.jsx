@@ -35,7 +35,7 @@ export default function ParentalControlsSetup({ onSave, onCancel }) {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/parental-controls/setup', {
+      const response = await fetch('/api/parental-controls/setup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

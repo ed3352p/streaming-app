@@ -15,7 +15,7 @@ export default function TermsOfService({ onAccept }) {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/terms/accept', {
+      const response = await fetch('/api/terms/accept', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

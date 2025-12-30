@@ -97,7 +97,7 @@ export default function ScreenRecordingDetector() {
     if (warningShownRef.current) return;
 
     try {
-      const response = await fetch('http://localhost:3001/api/security/recording-detection', {
+      const response = await fetch('/api/security/recording-detection', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

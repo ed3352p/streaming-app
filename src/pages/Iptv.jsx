@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import PageBanner from '../components/PageBanner';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 export default function Iptv() {
   const { user } = useAuth();

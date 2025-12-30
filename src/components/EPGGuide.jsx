@@ -17,7 +17,7 @@ export default function EPGGuide({ channelId, onProgramSelect }) {
   const fetchEPGData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/api/epg/channel/${channelId}?date=${selectedDate}`);
+      const response = await fetch(`/api/epg/channel/${channelId}?date=${selectedDate}`);
       
       if (response.ok) {
         const data = await response.json();
