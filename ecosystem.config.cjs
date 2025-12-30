@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 module.exports = {
   apps: [{
     name: 'lumixar-backend',
@@ -6,7 +8,8 @@ module.exports = {
     exec_mode: 'fork',
     env: {
       NODE_ENV: 'production',
-      PORT: 3001
+      PORT: 3001,
+      JWT_SECRET: process.env.JWT_SECRET
     },
     error_file: './logs/pm2-error.log',
     out_file: './logs/pm2-out.log',
@@ -17,7 +20,8 @@ module.exports = {
     max_memory_restart: '500M',
     env_production: {
       NODE_ENV: 'production',
-      PORT: 3001
+      PORT: 3001,
+      JWT_SECRET: process.env.JWT_SECRET
     }
   }]
 };

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ###############################################################################
 # Script de mise à jour Lumixar depuis GitHub
@@ -92,6 +92,23 @@ fi
 
 if [ -f "$BACKUP_DIR/.env" ]; then
     cp "$BACKUP_DIR/.env" "$APP_DIR/"
+fi
+
+# Vérifier et générer JWT_SECRET si nécessaire
+if [ -f "$APP_DIR/.env" ]; then
+    if ! grep -q "JWT_SECRET=" "$APP_DIR/.env"; then
+        print_info "Génération de JWT_SECRET..."
+        JWT_SECRET=$(openssl rand -hex 64)
+        echo "JWT_SECRET=$JWT_SECRET" >> "$APP_DIR/.env"
+        print_success "JWT_SECRET généré"
+    fi
+else
+    print_info "Création du fichier .env..."
+    JWT_SECRET=$(openssl rand -hex 64)
+    echo "NODE_ENV=production" > "$APP_DIR/.env"
+    echo "PORT=3001" >> "$APP_DIR/.env"
+    echo "JWT_SECRET=$JWT_SECRET" >> "$APP_DIR/.env"
+    print_success "Fichier .env créé"
 fi
 
 rm -rf "$TEMP_DIR"
