@@ -144,6 +144,7 @@ export default function Films() {
         @media (max-width: 768px) {
           .container {
             padding: 0 16px !important;
+            padding-top: 80px !important;
           }
           
           .search-bar {
@@ -156,6 +157,7 @@ export default function Films() {
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch !important;
             scrollbar-width: none !important;
+            padding-bottom: 8px !important;
           }
           
           .filters::-webkit-scrollbar {
@@ -166,6 +168,18 @@ export default function Films() {
             font-size: 13px !important;
             padding: 8px 16px !important;
             white-space: nowrap !important;
+          }
+          
+          /* Grille de films sur mobile - 2 colonnes */
+          .movies-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 16px !important;
+          }
+          
+          /* Publicités sur mobile */
+          .ad-container {
+            margin: 24px 0 !important;
+            padding: 12px !important;
           }
         }
         
@@ -290,6 +304,7 @@ export default function Films() {
 
           <div 
             ref={gridRef}
+            className="movies-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
@@ -325,7 +340,7 @@ export default function Films() {
                         margin: '0 auto',
                         padding: '0 8px'
                       }}>
-                        <div style={{
+                        <div className="ad-container" style={{
                           background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
                           borderRadius: '12px',
                           padding: '16px',

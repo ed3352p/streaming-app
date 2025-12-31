@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Play, Tv, CreditCard, User, LogOut, Shield, Sparkles, Film, Menu, X, Key } from 'lucide-react';
+import { Play, Tv, CreditCard, User, LogOut, Shield, Film, Menu, X, Key } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import '../styles/navbar-mobile.css';
 
@@ -11,30 +11,53 @@ export default function NavbarComponent() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Gestion du scroll
   useEffect(() => {
-    let ticking = false;
     const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setScrolled(window.scrollY > 20);
-          ticking = false;
-        });
-        ticking = true;
-      }
+      setScrolled(window.scrollY > 20);
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLogout = useCallback(() => {
+  // Fermer le menu mobile quand la route change
+  useEffect(() => {
+    console.log('[NAV] Route changed to:', location.pathname);
+    console.log('[NAV] Closing menu due to route change');
+    setMobileMenuOpen(false);
+  }, [location]);
+
+  // Log menu state changes
+  useEffect(() => {
+    console.log('[NAV] Menu state updated:', mobileMenuOpen ? 'OPEN' : 'CLOSED');
+  }, [mobileMenuOpen]);
+
+  const handleLogout = () => {
     logout();
     navigate('/');
-  }, [logout, navigate]);
+    setMobileMenuOpen(false);
+  };
 
-  const isActive = useCallback((path) => location.pathname === path, [location.pathname]);
+  const isActive = (path) => location.pathname === path;
 
-  const toggleMobileMenu = useCallback(() => setMobileMenuOpen(prev => !prev), []);
+  const toggleMobileMenu = () => {
+    console.log('[NAV] Toggle menu clicked, current state:', mobileMenuOpen);
+    setMobileMenuOpen(prev => {
+      console.log('[NAV] Menu state changing from', prev, 'to', !prev);
+      return !prev;
+    });
+  };
+
+  const handleMobileNavClick = (href) => {
+    console.log('[NAV] Mobile nav clicked, navigating to:', href);
+    console.log('[NAV] Current menu state before closing:', mobileMenuOpen);
+    setMobileMenuOpen(false);
+    console.log('[NAV] Menu closed, waiting before navigation...');
+    setTimeout(() => {
+      console.log('[NAV] Navigating now to:', href);
+      navigate(href);
+    }, 100);
+  };
 
   return (
     <>
@@ -299,6 +322,7 @@ export default function NavbarComponent() {
     )}
 
     {/* Mobile Menu */}
+    {mobileMenuOpen && (
     <div 
       className="mobile-menu"
       style={{
@@ -311,7 +335,7 @@ export default function NavbarComponent() {
         padding: '16px',
         paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
         zIndex: 99,
-        display: mobileMenuOpen ? 'flex' : 'none',
+        display: 'flex',
         flexDirection: 'column',
         gap: '8px',
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -319,19 +343,19 @@ export default function NavbarComponent() {
         maxHeight: 'calc(100vh - 70px)',
         overflowY: 'auto',
         WebkitOverflowScrolling: 'touch',
-        animation: mobileMenuOpen ? 'slideDown 0.3s ease' : 'none'
+        animation: 'slideDown 0.3s ease'
       }}
     >
-      <MobileNavLink href="/" icon={Play} label="Accueil" active={isActive('/')} onClick={() => setMobileMenuOpen(false)} />
-      <MobileNavLink href="/films" icon={Film} label="Films" active={isActive('/films')} onClick={() => setMobileMenuOpen(false)} />
-      <MobileNavLink href="/series" icon={Tv} label="Séries" active={isActive('/series')} onClick={() => setMobileMenuOpen(false)} />
-      <MobileNavLink href="/iptv" icon={Tv} label="IPTV Live" active={isActive('/iptv')} onClick={() => setMobileMenuOpen(false)} />
-      <MobileNavLink href="/subscribe" icon={CreditCard} label="Premium" active={isActive('/subscribe')} premium onClick={() => setMobileMenuOpen(false)} />
+      <MobileNavButton href="/" icon={Play} label="Accueil" active={isActive('/')} onClick={() => handleMobileNavClick('/')} />
+      <MobileNavButton href="/films" icon={Film} label="Films" active={isActive('/films')} onClick={() => handleMobileNavClick('/films')} />
+      <MobileNavButton href="/series" icon={Tv} label="Séries" active={isActive('/series')} onClick={() => handleMobileNavClick('/series')} />
+      <MobileNavButton href="/iptv" icon={Tv} label="IPTV Live" active={isActive('/iptv')} onClick={() => handleMobileNavClick('/iptv')} />
+      <MobileNavButton href="/subscribe" icon={CreditCard} label="Premium" active={isActive('/subscribe')} premium onClick={() => handleMobileNavClick('/subscribe')} />
       
       {user ? (
         <>
           {isAdmin && (
-            <MobileNavLink href="/admin" icon={Shield} label="Admin" active={isActive('/admin')} admin onClick={() => setMobileMenuOpen(false)} />
+            <MobileNavButton href="/admin" icon={Shield} label="Admin" active={isActive('/admin')} admin onClick={() => handleMobileNavClick('/admin')} />
           )}
           <div style={{borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '16px', marginTop: '8px'}}>
             <div
@@ -408,16 +432,22 @@ export default function NavbarComponent() {
         </a>
       )}
     </div>
+    )}
     </>
   );
 }
 
-const NavLink = memo(function NavLink({ href, icon: Icon, label, active, premium, admin }) {
+// NavLink pour le desktop
+function NavLink({ href, icon: Icon, label, active, premium, admin }) {
+  const navigate = useNavigate();
+  
   return (
-    <a
-      href={href}
+    <button
+      onClick={() => navigate(href)}
       className="nav-link-item"
       style={{
+        border: 'none',
+        cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
@@ -478,26 +508,39 @@ const NavLink = memo(function NavLink({ href, icon: Icon, label, active, premium
           borderRadius: '2px'
         }} />
       )}
-    </a>
+    </button>
   );
-});
+}
 
-const MobileNavLink = memo(function MobileNavLink({ href, icon: Icon, label, active, premium, admin, onClick }) {
+// Nouveau composant MobileNavButton qui utilise un button au lieu d'un lien
+function MobileNavButton({ icon: Icon, label, active, premium, admin, onClick }) {
+  const handleClick = (e) => {
+    console.log('[NAV-BUTTON] Button clicked:', label);
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) {
+      console.log('[NAV-BUTTON] Calling onClick handler');
+      onClick();
+    }
+  };
+  
   return (
-    <a
-      href={href}
-      onClick={onClick}
+    <button
+      onClick={handleClick}
       style={{
+        width: '100%',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
         padding: '14px 16px',
         borderRadius: '12px',
-        textDecoration: 'none',
+        border: 'none',
+        cursor: 'pointer',
         fontSize: '16px',
         fontWeight: '600',
         transition: 'all 0.3s ease',
         minHeight: '52px',
+        textAlign: 'left',
         background: active 
           ? premium 
             ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(109, 40, 217, 0.2))'
@@ -517,6 +560,6 @@ const MobileNavLink = memo(function MobileNavLink({ href, icon: Icon, label, act
     >
       <Icon style={{width: '22px', height: '22px', flexShrink: 0}} />
       {label}
-    </a>
+    </button>
   );
-});
+}
