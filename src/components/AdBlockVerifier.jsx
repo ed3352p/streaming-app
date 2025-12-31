@@ -8,42 +8,86 @@ export default function AdBlockVerifier({ onVerified, onBlocked }) {
   const maxRetries = 0;
 
   useEffect(() => {
-    // Vérifier si l'utilisateur a déjà été vérifié (localStorage persiste entre les sessions)
-    const cachedVerification = localStorage.getItem('adblock_verified');
-    const verificationTime = localStorage.getItem('adblock_verified_time');
-    const serverToken = localStorage.getItem('server_ad_token');
-    
-    // Cache valide pendant 4 minutes (moins que le token serveur de 5 min pour sécurité)
-    const cacheValidDuration = 4 * 60 * 1000;
-    const now = Date.now();
-    
-    if (cachedVerification === 'true' && verificationTime && serverToken) {
-      const timeSinceVerification = now - parseInt(verificationTime);
+    let lastActive = Date.now();
+
+    const checkAdblockWhenVisible = () => {
+      // Vérifier si l'utilisateur a déjà été vérifié (localStorage persiste entre les sessions)
+      const cachedVerification = localStorage.getItem('adblock_verified');
+      const verificationTime = localStorage.getItem('adblock_verified_time');
+      const serverToken = localStorage.getItem('server_ad_token');
       
-      if (timeSinceVerification < cacheValidDuration) {
-        // Utilisateur déjà vérifié récemment ET token serveur présent
-        // Vérifier rapidement que le token est toujours valide
-        verifyServerToken(serverToken).then(isValid => {
-          if (isValid) {
-            setStatus('verified');
-            if (onVerified) onVerified();
-          } else {
-            // Token expiré, re-vérifier
-            localStorage.removeItem('adblock_verified');
-            localStorage.removeItem('adblock_verified_time');
-            localStorage.removeItem('server_ad_token');
+      // Cache valide pendant 4 minutes (moins que le token serveur de 5 min pour sécurité)
+      const cacheValidDuration = 4 * 60 * 1000;
+      const now = Date.now();
+      
+      if (cachedVerification === 'true' && verificationTime && serverToken) {
+        const timeSinceVerification = now - parseInt(verificationTime);
+        
+        if (timeSinceVerification < cacheValidDuration) {
+          // Utilisateur déjà vérifié récemment ET token serveur présent
+          // Vérifier rapidement que le token est toujours valide
+          verifyServerToken(serverToken).then(isValid => {
+            if (isValid) {
+              setStatus('verified');
+              if (onVerified) onVerified();
+            } else {
+              // Token expiré, re-vérifier
+              localStorage.removeItem('adblock_verified');
+              localStorage.removeItem('adblock_verified_time');
+              localStorage.removeItem('server_ad_token');
+              initializeAdBlock();
+            }
+          }).catch(() => {
+            // Erreur de vérification, re-vérifier pour être sûr
             initializeAdBlock();
-          }
-        }).catch(() => {
-          // Erreur de vérification, re-vérifier pour être sûr
-          initializeAdBlock();
-        });
-        return;
+          });
+          return;
+        }
       }
+      
+      // Sinon, effectuer la vérification complète
+      initializeAdBlock();
+    };
+
+    // ✅ SOLUTION 1 (OBLIGATOIRE): Ne jamais tester AdBlock quand l'onglet est inactif
+    // Utilise Page Visibility API
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAdblockWhenVisible();
+      }
+    };
+
+    // ✅ SOLUTION 2: Bloquer la détection si l'utilisateur était absent trop longtemps
+    const handleFocus = () => {
+      const now = Date.now();
+      const diff = now - lastActive;
+
+      // Si + de 2 minutes, on ignore la détection
+      if (diff < 120000) {
+        checkAdblockWhenVisible();
+      }
+    };
+
+    const handleBlur = () => {
+      lastActive = Date.now();
+    };
+
+    // Vérifier immédiatement si l'onglet est visible
+    if (document.visibilityState === "visible") {
+      checkAdblockWhenVisible();
     }
-    
-    // Sinon, effectuer la vérification complète
-    initializeAdBlock();
+
+    // Écouter les changements de visibilité
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("blur", handleBlur);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("blur", handleBlur);
+    };
   }, []);
 
   const verifyServerToken = async (token) => {
