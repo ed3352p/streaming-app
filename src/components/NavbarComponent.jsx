@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Play, Tv, CreditCard, User, LogOut, Shield, Film, Menu, X, Key } from 'lucide-react';
+import { Play, Tv, CreditCard, User, LogOut, Shield, Film, Menu, X, Key, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import '../styles/navbar-mobile.css';
 
@@ -188,6 +188,36 @@ export default function NavbarComponent() {
             label="Code" 
             active={isActive('/redeem-code')}
           />
+          <a 
+            href="https://discord.gg/2z6HBZCapf" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: 'white',
+              textDecoration: 'none',
+              padding: '10px 16px',
+              borderRadius: '10px',
+              transition: 'all 0.3s ease',
+              background: 'rgba(88, 101, 242, 0.1)',
+              border: '1px solid rgba(88, 101, 242, 0.3)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.background = 'rgba(88, 101, 242, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(88, 101, 242, 0.3)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.background = 'rgba(88, 101, 242, 0.1)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <MessageCircle style={{ width: '18px', height: '18px', color: '#7289DA' }} />
+            <span style={{ fontSize: '14px', fontWeight: '600' }}>Discord</span>
+          </a>
           
           {user ? (
             <>
@@ -351,6 +381,27 @@ export default function NavbarComponent() {
       <MobileNavButton href="/series" icon={Tv} label="Séries" active={isActive('/series')} onClick={() => handleMobileNavClick('/series')} />
       <MobileNavButton href="/iptv" icon={Tv} label="IPTV Live" active={isActive('/iptv')} onClick={() => handleMobileNavClick('/iptv')} />
       <MobileNavButton href="/subscribe" icon={CreditCard} label="Premium" active={isActive('/subscribe')} premium onClick={() => handleMobileNavClick('/subscribe')} />
+      
+      <a 
+        href="https://discord.gg/2z6HBZCapf" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '14px 16px',
+          background: 'rgba(88, 101, 242, 0.1)',
+          borderRadius: '12px',
+          color: 'white',
+          textDecoration: 'none',
+          margin: '8px 0',
+          border: '1px solid rgba(88, 101, 242, 0.3)'
+        }}
+      >
+        <MessageCircle style={{ width: '20px', height: '20px', color: '#7289DA' }} />
+        <span style={{ fontSize: '15px', fontWeight: '600' }}>Rejoindre notre Discord</span>
+      </a>
       
       {user ? (
         <>
