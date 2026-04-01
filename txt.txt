@@ -42,5 +42,5 @@
     - N'UTILISEZ AUCUN LOGICIEL TIERS. C'EST INUTILE ET DESTRUCTEUR.
     - LE TEMPS JOUE CONTRE VOUS. CHAQUE SECONDE EST CRUCIALE.
 
-    Votre identifiant unique : {VICTIM_ID}
+    Votre identifiant unique : 
     Le compte à rebours a commencé. Ne nous testez pas.
